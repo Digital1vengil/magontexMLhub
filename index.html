@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>PARKA Sales Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- defer: no bloquean el primer paint. Ninguna se usa antes de DOMContentLoaded; se ejecutan en orden,
+     antes de main.ts (que es module = deferido), así los globals (Chart/XLSX/JSZip/pdfjsLib) están listos. -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+
+
+<script type="module" src="/src/main.ts"></script>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="app">
+
+<!-- HEADER -->
+<header class="header">
+  <button class="mob-menu-btn" id="mob-menu-btn" onclick="toggleSidebar()" style="display:none;align-items:center;justify-content:center;width:40px;height:40px;border:none;background:none;cursor:pointer;flex-shrink:0;color:var(--text);margin-left:8px">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="h-brand">
+    <span class="h-logo">PARKA<sup>™</sup></span>
+    <div class="h-sep"></div>
+    <span class="h-sub">Sales Hub</span>
+  </div>
+  
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <!-- ANALISIS -->
+  <div class="nav-label">Analisis</div>
+  <button class="nav-item active" onclick="nav('analisis',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Resumen
+  </button>
+  <button class="nav-item" onclick="nav('ventas',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 10h18M3 14h18M10 3v18M3 6a3 3 0 013-3h12a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6z"/></svg>
+    Ventas ML
+  </button>
+  <button class="nav-item" onclick="nav('reclamos',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    Reclamos
+  </button>
+  <button class="nav-item" onclick="nav('devoluciones',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 7h13a4 4 0 014 4v0a4 4 0 01-4 4H7"/><path d="M7 3L3 7l4 4"/></svg>
+    Devoluciones
+  </button>
+  <button class="nav-item" onclick="nav('radar',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="6"/></svg>
+    Radar
+  </button>
+  <button class="nav-item" onclick="nav('promos',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+    Promos
+  </button>
+  <div class="nav-div"></div>
+  <!-- INCONGRUENCIAS -->
+  <div class="nav-label">Incongruencias</div>
+  <button class="nav-item" onclick="nav('incong-stock',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+    Stock
+  </button>
+  <button class="nav-item" onclick="nav('incong-drops',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 3v18h18M7 14l4-4 4 4 5-6"/><path d="M16 17l3 0M19 17l0-3"/></svg>
+    Caídas de stock
+  </button>
+  <button class="nav-item" onclick="nav('incong-talles',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 5h16M4 5v14M4 5l4 4M20 5v14M4 19h16M9 9h7M9 13h7"/></svg>
+    Guía de talles
+  </button>
+  <button class="nav-item" onclick="nav('incong-desc',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h10M4 18h7"/></svg>
+    Descripción
+  </button>
+  <div class="nav-div"></div>
+  <button class="nav-item" onclick="nav('incong-sku',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 7h.01M7 3h5a2 2 0 011.41.59l7 7a2 2 0 010 2.82l-5 5a2 2 0 01-2.82 0l-7-7A2 2 0 014 9.41V5a2 2 0 012-2z"/></svg>
+    SKU
+  </button>
+  <div class="nav-div"></div>
+  <!-- EDICIÓN -->
+  <div class="nav-label">Edición</div>
+  <button class="nav-item" onclick="nav('edicion',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Editor masivo
+  </button>
+  <button class="nav-item" onclick="nav('publicaciones',this)">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7l8-4 8 4v10l-8 4-8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>
+    SWAP
+  </button>
+  <div class="nav-div"></div>
+  <!-- PRECIOS -->
+  <div class="nav-label">Precios</div>
+  <button class="nav-item" onclick="nav('precios',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+    Lista de precios
+  </button>
+  <button class="nav-item" onclick="nav('matrices',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+    Matrices
+  </button>
+  <button class="nav-item" onclick="nav('costos',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    Costos
+  </button>
+  <button class="nav-item" onclick="nav('maestro',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+    Maestro
+  </button>
+  <div class="nav-div"></div>
+  <!-- OPERACIONES -->
+  <div class="nav-label">Operaciones</div>
+  <button class="nav-item" onclick="nav('orders',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Cargar ordenes
+    <span class="nbadge" id="nb-orders" style="display:none">0</span>
+  </button>
+  <button class="nav-item" onclick="nav('hist-cargas',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M12 12v4m0 0l-2-2m2 2l2-2"/></svg>
+    Historial cargas
+    <span class="nbadge" id="nb-hcargas" style="display:none">0</span>
+  </button>
+  <button class="nav-item" onclick="nav('despachos',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+    Despachos
+  </button>
+  <button class="nav-item" onclick="window.open('/scanner/index.html','_blank')">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+    Scanner despacho
+  </button>
+  <div class="nav-div"></div>
+  <!-- CONTROL -->
+  <div class="nav-label">Control</div>
+  <button class="nav-item" onclick="nav('reportes',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 017 7h2m6 0h2a5 5 0 010 10h-2m-7-5h8"/></svg>
+    Reportes
+    <span class="nbadge" id="nb-rep" style="display:none">0</span>
+  </button>
+  <button class="nav-item" onclick="nav('historial',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    Historial
+    <span class="nbadge" id="nb-hist" style="display:none">0</span>
+  </button>
+  <div class="nav-div"></div>
+  <!-- SISTEMA -->
+  <div class="nav-label">Sistema</div>
+  <button class="nav-item" onclick="nav('platforms',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+    Plataformas
+  </button>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- CARGAR ÓRDENES -->
+<div class="sec" id="sec-orders">
+  <div class="sec-head">
+    <div class="sec-title">Cargar órdenes</div>
+    <div class="sec-sub">Cargá ML, Tienda Nube o manual — se combinan automáticamente</div>
+  </div>
+
+  <div style="flex:1;overflow:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+
+    <!-- ── ZONA DE CARGA: 2 columnas ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+      <!-- Card ML -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-head" style="background:linear-gradient(135deg,#4F46E5,#6366F1)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px">📊</span>
+            <div>
+              <div style="font-weight:700;font-size:13px;color:#fff">Mercado Libre</div>
+              <div style="font-size:10px;color:rgba(255,255,255,.7)">Reporte Excel .xlsx</div>
+            </div>
+          </div>
+          <div id="ml-badge" style="display:none;background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px"></div>
+        </div>
+        <div class="card-body" style="padding:12px">
+          <div class="drop-zone" id="xl-dz" onclick="document.getElementById('xl-inp').click()"
+            ondragover="event.preventDefault();this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="onXLDrop(event)"
+            style="padding:20px 12px;min-height:80px">
+            <div class="dz-title" style="font-size:13px">Arrastrá el Excel de ML aquí</div>
+            <div class="dz-sub">o hacé clic · múltiples archivos</div>
+            <input type="file" id="xl-inp" accept=".xlsx,.xls" style="display:none" multiple onchange="onXLInput(event)">
+          </div>
+          <div id="xl-files-list" style="display:flex;flex-direction:column;gap:4px;margin-top:6px"></div>
+          <div class="loading-row" id="xl-load" style="display:none;padding:6px 0"><div class="spin"></div><span id="xl-loadtxt">Procesando...</span></div>
+          <div id="ml-loaded-info" style="display:none;margin-top:8px;padding:6px 10px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:6px;font-size:12px;color:var(--green);font-weight:600"></div>
+        </div>
+      </div>
+
+      <!-- Card TN -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-head" style="background:linear-gradient(135deg,#1D4ED8,#2563EB)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px">🛍️</span>
+            <div>
+              <div style="font-weight:700;font-size:13px;color:#fff">Tienda Nube</div>
+              <div style="font-size:10px;color:rgba(255,255,255,.7)">Exportar CSV desde Admin → Ventas</div>
+            </div>
+          </div>
+          <div id="tn-badge" style="display:none;background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px"></div>
+        </div>
+        <div class="card-body" style="padding:12px">
+          <div class="drop-zone" id="tn-dz" onclick="document.getElementById('tn-inp').click()"
+            ondragover="event.preventDefault();this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="onTNDrop(event)"
+            style="padding:20px 12px;min-height:80px">
+            <div class="dz-title" style="font-size:13px">Arrastrá el CSV de TN aquí</div>
+            <div class="dz-sub">o hacé clic · ventas-XXXX.csv</div>
+            <input type="file" id="tn-inp" accept=".csv" style="display:none" onchange="onTNInput(event)">
+          </div>
+          <div class="loading-row" id="tn-load" style="display:none;padding:6px 0"><div class="spin"></div><span>Procesando CSV...</span></div>
+          <div id="tn-loaded-info" style="display:none;margin-top:8px;padding:6px 10px;background:#DBEAFE;border:1px solid #93C5FD;border-radius:6px;font-size:12px;color:#1D4ED8;font-weight:600"></div>
+        </div>
+      </div>
+
+    </div><!-- /grid -->
+
+    <!-- ── RESULTADO COMBINADO ── -->
+    <div id="xl-result-state" style="display:none;flex-direction:column;gap:14px">
+
+      <!-- Barra de acciones -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;color:var(--text)" id="xl-result-title">Órdenes combinadas</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px" id="xl-result-sub"></div>
+        </div>
+        <div class="btn-row" style="flex-wrap:wrap">
+          <div class="srch" style="max-width:200px">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="xl-search" placeholder="Buscar SKU..." oninput="filterXL(this.value)">
+          </div>
+          <button class="btn btn-success btn-sm" id="btn-export-xl">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Generar reporte
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btn-save-drive-ctrl" style="display:none" onclick="gdSaveControlToDrive()">
+            <svg width="13" height="13" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>
+            Guardar en Drive
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="gdOpenFolder()" style="gap:5px">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+            Abrir Drive
+          </button>
+          <button class="btn btn-primary btn-sm" id="btn-confirm-hist">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Confirmar al historial
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btn-save-drive-orders" style="display:none" onclick="gdSaveOrdersToDrive()">
+            <svg width="13" height="13" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>
+            Guardar en Drive
+          </button>
+          <button class="btn btn-danger btn-sm" id="btn-new-report">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>Limpiar
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="sumbar" id="xl-sumbar" style="border-radius:var(--r);border:1px solid var(--border)">
+        <div class="sumi">Órdenes <strong id="xlsum-n">0</strong></div>
+        <div class="sumdiv"></div>
+        <div class="sumi">Unidades <strong id="xlsum-u">0</strong></div>
+        <div class="sumdiv"></div>
+        <div class="sumi">SKUs <strong id="xlsum-sku">0</strong></div>
+        <div class="sumdiv"></div>
+        <div class="sumi">🚚 Flex <strong id="xlsum-flex" style="color:var(--accent)">0</strong></div>
+        <div class="sumdiv"></div>
+        <div class="sumi">📦 Colecta <strong id="xlsum-colecta" style="color:var(--orange)">0</strong></div>
+        <div class="sumdiv"></div>
+        <div class="sumi">✉ Correo <strong id="xlsum-correo" style="color:var(--green)">0</strong></div>
+      </div>
+
+      <!-- Tabla agrupada -->
+      <div class="card" style="margin-bottom:0">
+        <div style="overflow:auto;max-height:440px">
+          <table>
+            <thead><tr>
+              <th>SKU</th><th>Color</th><th>Talle</th>
+              <th style="text-align:center">Cant.</th>
+              <th style="text-align:center">🚚 Flex</th>
+              <th style="text-align:center">📦 Colecta</th>
+              <th style="text-align:center">✉ Correo</th>
+              <th style="text-align:center">📍 Punto</th>
+            </tr></thead>
+            <tbody id="xl-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /xl-result-state -->
+
+    <!-- ── MANUAL: botón para agregar ── -->
+    <div class="card" style="margin-bottom:0">
+      <div class="card-head">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:18px">✏️</span>
+          <div>
+            <div style="font-weight:700;font-size:13px">Carga manual</div>
+            <div style="font-size:10px;color:var(--text-muted)">Agregá órdenes una por una</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <div class="srch" style="max-width:180px">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" placeholder="Buscar..." oninput="filterManual(this.value)">
+          </div>
+          <button class="btn btn-success btn-sm" onclick="exportManualXL()" title="Exportar solo órdenes manuales">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Exportar manual
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="gdSaveManualToDrive()" title="Guardar órdenes manuales en Drive">
+            <svg width="13" height="13" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>
+            Drive
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="openModal()">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nueva orden
+          </button>
+        </div>
+      </div>
+      <div id="panel-manual" style="overflow:auto;max-height:320px">
+        <table id="manual-table">
+          <thead><tr>
+            <th>Orden</th><th>Producto</th><th>SKU</th><th>Variante</th>
+            <th style="text-align:center">Cant.</th>
+            <th style="text-align:center">Estado</th>
+            <th style="text-align:center">Canal</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="manual-tbody"></tbody>
+        </table>
+        <div id="manual-empty" style="padding:28px;text-align:center;color:var(--text-muted);font-size:13px">Sin órdenes manuales</div>
+      </div>
+    </div>
+
+  </div><!-- /sec-body -->
+</div><!-- /sec-orders: faltaba este cierre; sin el, precios/matrices/costos quedaban anidadas adentro de sec-orders (display:none) e invisibles -->
+
+
+<!-- PRECIOS -->
+<div class="sec" id="sec-precios">
+  <div class="sec-head">
+    <div class="sec-title">Lista de precios</div>
+    <div class="sec-sub">Modificadores de descuento y PVP full por artículo</div>
+  </div>
+  <div class="sec-body">
+    <!-- inputs ocultos para compatibilidad JS -->
+    <div style="display:none">
+      <input type="number" id="pc-dolar" value="1200">
+      <input type="number" id="pc-margen" value="35">
+      <input type="number" id="pc-comision" value="5">
+      <input type="text" id="pc-search" value="">
+    </div>
+    <!-- Tabla de precios -->
+    <div class="card">
+      <div style="overflow:auto">
+        <table>
+          <thead><tr>
+            <th>Artículo / SKU</th>
+            <th style="text-align:right">Costo ARS</th>
+            <th style="text-align:center">Descuento ML %</th>
+            <th style="text-align:center">Descuento TN %</th>
+            <th style="text-align:center;background:var(--accent);color:#fff">PVP Full ML</th>
+            <th style="text-align:center;background:var(--teal);color:#fff">PVP Full TN</th>
+            <th style="text-align:center">Precio Dist.</th>
+            <th style="text-align:center">PVP c/Vendedor</th>
+          </tr></thead>
+          <tbody id="pc-tbody"></tbody>
+        </table>
+      </div>
+      <div id="pc-empty" style="padding:48px;text-align:center;color:var(--text-muted)">
+        <div style="font-size:36px;margin-bottom:10px">🏷️</div>
+        <div style="font-weight:700;font-size:14px">Sin productos</div>
+        <div style="font-size:12px;margin-top:6px">Creá artículos desde <strong style="color:var(--accent)">Costos</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MATRICES -->
+<div class="sec" id="sec-matrices">
+  <div class="sec-head">
+    <div class="sec-title">Matrices</div>
+    <div class="sec-sub">Análisis de rentabilidad por plan de pago — ML cuotas 6/3, IB, Clásica</div>
+  </div>
+  <div class="sec-body">
+    <!-- Config sistema con paleta app -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head" style="background:linear-gradient(135deg,var(--accent),var(--teal))">
+        <span class="card-title" style="color:#fff">Configuración del sistema</span>
+      </div>
+      <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
+        <div class="field"><label>Dólar BNA</label><input type="number" id="mx-dolar" value="1510" oninput="matrizRender()"></div>
+        <div class="field"><label>IVA %</label><input type="number" id="mx-iva" value="21" oninput="matrizRender()"></div>
+        <div class="field"><label>IIBB %</label><input type="number" id="mx-iibb" value="5" oninput="matrizRender()"></div>
+        <div class="field"><label>Imp. déb/créd %</label><input type="number" id="mx-impdc" value="1.2" oninput="matrizRender()"></div>
+        <div class="field"><label>Comisión ML %</label><input type="number" id="mx-plat" value="15.5" oninput="matrizRender()"></div>
+        <div class="field"><label>6 Cuotas %</label><input type="number" id="mx-c6" value="12.3" oninput="matrizRender()"></div>
+        <div class="field"><label>3 Cuotas %</label><input type="number" id="mx-c3" value="8.4" oninput="matrizRender()"></div>
+        <div class="field"><label>Interés Bajo %</label><input type="number" id="mx-ib" value="5" oninput="matrizRender()"></div>
+        <div class="field"><label>Envío $</label><input type="number" id="mx-envio" value="6500" oninput="matrizRender()"></div>
+      </div>
+    </div>
+    <!-- Matrices por producto -->
+    <div id="mx-content"></div>
+    <div id="mx-empty" style="padding:48px;text-align:center;color:var(--text-muted)">
+      <div style="font-size:36px;margin-bottom:10px">📊</div>
+      <div style="font-weight:700;font-size:14px">Sin productos</div>
+      <div style="font-size:12px;margin-top:6px">Creá artículos desde <strong style="color:var(--accent)">Costos</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- COSTOS -->
+<div class="sec" id="sec-maestro">
+  <div class="sec-head">
+    <div class="sec-title">Maestro</div>
+    <div class="sec-sub">Todas las columnas del Excel maestro · elegí qué columnas ver · descuentos editables (recalculan el precio del tier) · ACOS/ROAS en vivo</div>
+  </div>
+  <div class="sec-body">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+      <button id="maestro-refresh-btn" class="btn btn-sm" onclick="maestroRefreshAds()" title="Re-trae ACOS y ROAS de Mercado Ads (cambian todo el tiempo)">↻ Actualizar ACOS/ROAS</button>
+      <button id="maestro-margen-btn" class="btn btn-sm" onclick="maestroCalcMargen()" title="Calcula el margen real por modelo desde tus ventas (comisión + envío reales). La primera vez del día escanea las ventas (~1-2 min); después usa cache.">Margen real</button>
+      <button class="btn btn-sm" onclick="maestroExport()" title="Descarga un Excel con las columnas visibles, en el orden actual">⬇ Exportar Excel</button>
+      <label class="btn btn-sm" style="cursor:pointer;color:#b45309;border-color:#d97706" title="⚠ Reemplaza TODO el maestro (pisa las ediciones hechas acá). El maestro vive en la base de datos; el Excel es solo para importar en bloque.">⚠ Reemplazar desde Excel<input type="file" accept=".xlsx,.xls" onchange="pubMasterFile(this.files&&this.files[0])" style="display:none"></label>
+      <span style="font-size:11px;color:var(--text-soft)">El maestro se guarda en la base — este es el que rige todo. El Excel quedó solo como importación.</span>
+    </div>
+    <div id="maestro-root"></div>
+  </div>
+</div>
+
+<!-- RADAR DE DECISIONES -->
+<div class="sec" id="sec-radar">
+  <div class="sec-head">
+    <div class="sec-title">Radar de decisiones</div>
+    <div class="sec-sub">Por modelo, diagnóstico: margen real + cobertura (días de stock) + conversión + ACOS + devoluciones. Muestra las PALANCAS en juego (precio/costo · bajar/cortar ads · liquidar · talles · reponer/dejar por stock · escalar), no ordena una sola. Read-only.</div>
+  </div>
+  <div class="sec-body">
+    <div id="radar-root"></div>
+  </div>
+</div>
+
+<div class="sec" id="sec-costos">
+  <div class="sec-head">
+    <div class="sec-title">Costos</div>
+    <div class="sec-sub">Estructura FOB → Puesto en Argentina · Dólar BNA editable</div>
+  </div>
+  <div class="sec-body">
+
+    <!-- Parámetros con paleta app -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head" style="background:linear-gradient(135deg,var(--accent),var(--teal))">
+        <div>
+          <span class="card-title" style="color:#fff">Matriz FOB & Importación</span>
+          <div style="font-size:10px;color:rgba(255,255,255,.7);margin-top:2px">Liquidación a Dólar BNA</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:8px 14px;border-radius:8px">
+          <span style="color:rgba(255,255,255,.8);font-size:11px;font-weight:600">Dólar BNA $</span>
+          <input type="number" id="cv-dolar-bna" value="1200" oninput="costosModeloRender()" style="background:transparent;color:#fff;font-size:16px;font-weight:800;font-family:'Space Grotesk',monospace;border:none;outline:none;width:80px">
+        </div>
+      </div>
+      <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+        <div class="field"><label>Arancel Import. %</label><input type="number" id="cv-arancel" value="20" oninput="costosModeloRender()"></div>
+        <div class="field"><label>Tasa Estadística %</label><input type="number" id="cv-estadistica" value="3" oninput="costosModeloRender()"></div>
+        <div class="field"><label>Flete & Seguro %</label><input type="number" id="cv-flete" value="15" oninput="costosModeloRender()"></div>
+        <div class="field"><label>Otros (IVA/DGR) %</label><input type="number" id="cv-otros" value="27" oninput="costosModeloRender()"></div>
+        <div class="field"><label>Gastos Internos %</label><input type="number" id="cv-internos" value="5" oninput="costosModeloRender()"></div>
+        <div class="field"><label>Publicidad %</label><input type="number" id="cv-publicidad" value="10" oninput="costosModeloRender()"></div>
+      </div>
+    </div>
+
+    <!-- Toolbar: crear artículo / importar Excel -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head">
+        <span class="card-title">Artículos</span>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" onclick="costosNuevoArticulo()">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nuevo artículo
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('cv-xl-inp').click()">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Importar Excel
+          </button>
+          <input type="file" id="cv-xl-inp" accept=".xlsx,.xls" style="display:none" onchange="costosImportXL(event)">
+          <button class="btn btn-secondary btn-sm" onclick="costosDescargarPlantilla()">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Descargar plantilla
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="costosExportXL()">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Exportar Excel
+          </button>
+        </div>
+      </div>
+      <div class="card-body" style="font-size:12px;color:var(--text-muted);padding:10px 16px">
+        <span style="background:var(--accent-light);color:var(--accent);padding:3px 10px;border-radius:6px;font-weight:600;font-size:11px">💡 Al crear un artículo se generan 2 versiones: con publicidad ML y con publicidad Tienda Nube (costos independientes)</span>
+      </div>
+    </div>
+      <div class="card-head">
+        <span class="card-title">Costo por artículo</span>
+        <button class="btn btn-primary btn-sm" onclick="costosExportXL()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Exportar Excel
+        </button>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:10px 16px">Producto / SKU</th>
+              <th style="text-align:right;padding:10px 14px">FOB Unitario</th>
+              <th style="text-align:right;padding:10px 14px;color:#dc2626">Costos Aduana+Flete</th>
+              <th style="text-align:right;padding:10px 14px;background:var(--accent);color:#fff">FOB Puesto (USD)</th>
+              <th style="text-align:right;padding:10px 14px">Puesto ARS</th>
+              <th style="text-align:right;padding:10px 14px;background:var(--teal);color:#fff">Costo Total c/Pub</th>
+            </tr>
+          </thead>
+          <tbody id="cv-tbody-modelo"></tbody>
+        </table>
+      </div>
+      <div id="cv-empty-modelo" style="padding:48px;text-align:center;color:var(--text-muted)">
+        <div style="font-size:36px;margin-bottom:10px">📦</div>
+        <div style="font-weight:700;font-size:14px">Sin productos</div>
+        <div style="font-size:12px;margin-top:6px">Agregá artículos desde <strong style="color:var(--accent)">Lista de Precios</strong></div>
+      </div>
+      <div id="cv-footer-modelo" style="display:none;padding:14px 20px;background:var(--surface2);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em">Multiplicador promedio efectivo</span>
+        <span id="cv-mult-avg" style="font-size:18px;font-weight:800;color:var(--accent);font-family:'Space Grotesk',monospace"></span>
+      </div>
+
+      <!-- Margen real — MOVIDO adentro de sec-body (antes quedaba afuera, altura 0, invisible). Movimiento puro: NO cambia el conteo de tags ni toca el cierre extra (benigno) de mas abajo. -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-head"><div><span class="card-title">💰 Margen real por modelo</span><span style="font-size:11px;color:var(--text-muted);margin-left:8px">comisión + envío de ventas reales</span></div></div>
+        <div style="font-size:11px;color:var(--text-muted);margin:8px 0">Combina tu <b>costo landed</b> (de la tabla de arriba) con la <b>comisión real</b> (incluye cuotas) y el <b>envío neto</b> (ya descontado el reintegro de ML), traídos de las ventas reales de los últimos 30 días. Precio <b>neto de IVA</b> (21%). Vos solo cargás el costo del producto; lo demás lo trae ML.</div>
+        <div style="margin:8px 0;display:flex;gap:8px;flex-wrap:wrap"><button id="cv-margen-btn" onclick="costosMargenReal()" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:600">Calcular margen real</button><button onclick="costosMargenReal(true)" class="btn btn-sm" title="Re-trae comisión y envío de las ventas (puede tardar ~1-2 min)">↻ Recalcular</button></div>
+        <div id="cv-margen-loading" style="display:none;padding:6px 0;align-items:center;gap:8px;font-size:12px;color:var(--text-soft)"><div class="spin"></div><span id="cv-margen-txt">Calculando…</span></div>
+        <div id="cv-margen-results" style="margin-top:10px;overflow-x:auto"></div>
+      </div>
+    </div>
+
+  </div>
+
+<!-- PLATAFORMAS -->
+<div class="sec" id="sec-platforms">
+  <div class="sec-head"><div class="sec-title">Plataformas</div><div class="sec-sub">Cargá y revisá órdenes de Mercado Libre y Tienda Nube</div></div>
+  <div class="sec-body">
+
+    <div class="card">
+      <div class="card-head">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="plat-logo ml">ML</div><span class="card-title">Mercado Libre</span>
+          <div class="status-row"><div class="sdot" id="ml-sdot" style="background:var(--text-muted)"></div><span id="ml-stxt">Sin credenciales</span></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="fetchML()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Cargar órdenes ML
+        </button>
+      </div>
+      <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>Período</label>
+          <select id="ml-period" onchange="periodToggle('ml')">
+            <option value="7d" selected>Últimos 7 días</option><option value="30d">Últimos 30 días</option><option value="today">Hoy</option><option value="custom">Personalizado</option>
+          </select>
+        </div>
+        <div class="field"><label>Estado</label>
+          <select id="ml-stf"><option value="all">Todos</option><option value="paid">Pagadas</option><option value="pending">Pendientes</option><option value="shipped">Enviadas</option></select>
+        </div>
+        <div class="field" id="ml-dfw" style="display:none"><label>Desde</label><input type="date" id="ml-df"></div>
+        <div class="field" id="ml-dtw" style="display:none"><label>Hasta</label><input type="date" id="ml-dt"></div>
+      </div>
+      <div class="loading-row" id="ml-load"><div class="spin"></div><span id="ml-loadtxt">Cargando...</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="plat-logo tn">TN</div><span class="card-title">Tienda Nube</span>
+          <div class="status-row"><div class="sdot" id="tn-sdot" style="background:var(--text-muted)"></div><span id="tn-stxt">Sin credenciales</span></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="fetchTN()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Cargar órdenes TN
+        </button>
+      </div>
+      <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>Período</label>
+          <select id="tn-period" onchange="periodToggle('tn')">
+            <option value="7d" selected>Últimos 7 días</option><option value="30d">Últimos 30 días</option><option value="today">Hoy</option><option value="custom">Personalizado</option>
+          </select>
+        </div>
+        <div class="field"><label>Estado</label>
+          <select id="tn-stf"><option value="all">Todos</option><option value="paid">Pagadas</option><option value="pending">Pendientes</option></select>
+        </div>
+        <div class="field" id="tn-dfw" style="display:none"><label>Desde</label><input type="date" id="tn-df"></div>
+        <div class="field" id="tn-dtw" style="display:none"><label>Hasta</label><input type="date" id="tn-dt"></div>
+      </div>
+      <div class="loading-row" id="tn-load"><div class="spin"></div><span id="tn-loadtxt">Cargando...</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Órdenes de plataformas</span>
+        <div class="btn-row">
+          <div class="srch" style="max-width:200px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" placeholder="Buscar..." oninput="filterPlat(this.value)"></div>
+          <button class="btn btn-success btn-sm" onclick="exportPlatXL()"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Excel</button>
+        </div>
+      </div>
+      <div id="plat-empty" class="empty" style="padding:28px"><div class="empty-icon">🌐</div><div class="empty-sub">Cargá órdenes de ML o TN arriba</div></div>
+      <div id="plat-wrap" style="display:none;overflow:auto;max-height:320px">
+        <table><thead><tr><th>Plataforma</th><th>N° Orden</th><th>Fecha</th><th>SKU</th><th>Producto</th><th style="text-align:center">Cant.</th><th>Estado</th></tr></thead>
+        <tbody id="plat-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORTES -->
+<div class="sec" id="sec-reportes">
+  <div class="sec-head"><div class="sec-title">Control de despacho</div><div class="sec-sub">Subí el Control.pdf de ML -- lo ordenamos por SKU (M→W→otros) y generás el reporte listo para despachar</div></div>
+  <div class="sec-body">
+
+    <!-- Upload -->
+    <div class="card">
+      <div class="card-head"><span class="card-title">Subir Control.pdf</span><span style="font-size:11px;color:var(--text-muted)">El PDF de control que genera ML con las órdenes del día</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+        <div class="drop-zone" id="dz" onclick="document.getElementById('rar-inp').click()"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="onDrop(event)">
+          <div class="dz-icon">📄</div>
+          <div class="dz-title">Arrastrá uno o varios Control.pdf aquí</div>
+          <div class="dz-sub">o hacé clic para seleccionar • Múltiples PDFs se combinan automáticamente</div>
+          <input type="file" id="rar-inp" accept=".pdf" style="display:none" multiple onchange="onFileInput(event)">
+        </div>
+        <div class="loading-row" id="rep-load" style="display:none;padding:0"><div class="spin"></div><span id="rep-loadtxt">Leyendo Control.pdf...</span></div>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div class="card" id="rep-card" style="display:none;margin-bottom:0">
+      <div class="card-head">
+        <div>
+          <span class="card-title" id="rep-card-title">Órdenes procesadas</span>
+          <span id="rep-card-sub" style="font-size:11px;color:var(--text-muted);margin-left:8px"></span>
+        </div>
+        <div class="btn-row">
+          <div class="srch" style="max-width:200px">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="rep-filter" placeholder="SKU, comprador..." oninput="filterControlTable()">
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-gen-control">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Generar reporte ordenado
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="clearControl()">Limpiar</button>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div class="sumbar">
+        <div class="sumi" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          Órdenes <strong id="ctrl-n">0</strong>
+          <button onclick="confirmControlToHistorial()" style="padding:4px 12px;background:#4F46E5;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Confirmar al historial
+          </button>
+          <button id="btn-save-drive-rep" onclick="gdSaveControlToDrive()" style="display:none;padding:4px 12px;background:#fff;color:#0A0A0A;border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;align-items:center;gap:4px">
+            <svg width="12" height="12" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg" style="display:inline"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>
+            Guardar en Drive
+          </button>
+        </div>
+        <div class="sumdiv"></div>
+        <div class="sumi">Packs dobles <strong id="ctrl-packs">0</strong></div>
+        <div class="sumdiv"></div>
+        <div class="sumi">SKUs únicos <strong id="ctrl-skus">0</strong></div>
+      </div>
+      <!-- Preview table -->
+      <div style="overflow:auto;max-height:400px">
+        <table>
+          <thead><tr>
+            <th style="width:28px">#</th>
+            <th>Nombre</th>
+            <th>N° Venta / Pack ID</th>
+            <th>SKU / Talle</th>
+            <th style="text-align:center">Cant.</th>
+          </tr></thead>
+          <tbody id="rep-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- HISTORIAL CARGAS -->
+<div class="sec" id="sec-hist-cargas">
+  <div class="sec-head">
+    <div class="sec-title">Historial de cargas</div>
+    <div class="sec-sub">Registro de los Excel de ML importados — cada entrada es una carga confirmada</div>
+  </div>
+  <div class="sec-body">
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Cargas registradas</span>
+        <div class="btn-row">
+          <div class="srch">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="hcargas-search" placeholder="Buscar archivo..." oninput="renderHCargas()">
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="clearHCargas()">🗑 Limpiar</button>
+        </div>
+      </div>
+      <div id="hcargas-empty" style="padding:40px;text-align:center;color:var(--text-muted)">
+        <div style="font-size:32px;margin-bottom:8px">📋</div>
+        <div style="font-weight:600">Sin cargas registradas</div>
+        <div style="font-size:12px;margin-top:4px">Importá un Excel en Cargar Órdenes y confirmá</div>
+      </div>
+      <div style="overflow:auto">
+        <table id="hcargas-table" style="display:none">
+          <thead><tr>
+            <th>Fecha</th><th>Archivo</th>
+            <th style="text-align:center">Órdenes</th>
+            <th style="text-align:center">Unidades</th>
+            <th style="text-align:center">Flex</th>
+            <th style="text-align:center">Colecta</th>
+            <th style="text-align:center">Correo</th>
+            <th style="text-align:center">Punto</th>
+            <th>Acciones</th>
+          </tr></thead>
+          <tbody id="hcargas-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORIAL -->
+<div class="sec" id="sec-historial">
+  <div class="sec-head">
+    <div class="sec-title">Historial de reportes</div>
+    <div class="sec-sub">Registro de los reportes de Control.pdf confirmados — cada entrada es un despacho del día</div>
+  </div>
+  <div class="toolbar">
+    <div class="srch">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="hist-search" placeholder="Buscar por archivo, fecha..." oninput="renderHistorial()">
+    </div>
+    <div class="tb-right">
+      <button class="btn btn-danger btn-sm" onclick="clearHistorial()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        Limpiar historial
+      </button>
+      <button class="btn btn-success btn-sm" onclick="exportHistXL()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportar Excel
+      </button>
+    </div>
+  </div>
+  <div style="flex:1;overflow:auto;padding:16px 24px">
+    <div class="tbl-wrap">
+      <div class="empty" id="hist-empty">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">Sin historial todavía</div>
+        <div class="empty-sub">Cargá el Excel de ML y hacé clic en "Confirmar al historial" para registrar un despacho</div>
+      </div>
+      <table id="hist-table" style="display:none">
+        <thead><tr>
+          <th>Fecha y hora</th>
+          <th>Archivos PDF</th>
+          <th style="text-align:center">Órdenes</th>
+          <th style="text-align:center">Unidades</th>
+          <th style="text-align:center">Packs dobles</th>
+          <th></th>
+          <th></th>
+        </tr></thead>
+        <tbody id="hist-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- DESPACHOS POR DÍA -->
+<div class="sec" id="sec-despachos">
+  <div class="sec-head">
+    <div class="sec-title">Control de despachos</div>
+    <div class="sec-sub">Escaneá SKUs al despachar y revisá el historial por día</div>
+  </div>
+  <div class="toolbar">
+    <div class="field" style="margin:0;min-width:140px">
+      <select id="des-plat" onchange="renderDespachos()">
+        <option value="all">Todas las plataformas</option>
+        <option value="ml">Mercado Libre</option>
+        <option value="tn">Tienda Nube</option>
+        <option value="manual">Manual</option>
+      </select>
+    </div>
+    <div class="field" style="margin:0">
+      <input type="date" id="des-from" onchange="renderDespachos()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;outline:none">
+    </div>
+    <div class="field" style="margin:0">
+      <input type="date" id="des-to" onchange="renderDespachos()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;outline:none">
+    </div>
+    <div class="tb-right">
+      <button class="btn btn-ghost btn-sm" onclick="clearDesFilters()">Limpiar filtros</button>
+      <button class="btn btn-success btn-sm" onclick="exportDespachosXL()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Excel
+      </button>
+    </div>
+  </div>
+  <div class="sumbar" id="des-sumbar">
+    <div class="sumi">Días con despachos <strong id="dsum-dias">0</strong></div>
+    <div class="sumdiv"></div>
+    <div class="sumi">Total pedidos <strong id="dsum-total">0</strong></div>
+    <div class="sumdiv"></div>
+    <div class="sumi">Unidades totales <strong id="dsum-units">0</strong></div>
+    <div class="sumdiv"></div>
+    <div class="sumi">Promedio / día <strong id="dsum-avg">0</strong></div>
+  </div>
+  <div style="flex:1;overflow:auto;padding:16px 24px;display:flex;flex-direction:column;gap:16px">
+
+    <!-- ESCÁNER DE DESPACHO -->
+    <div class="scanner-section card" style="margin-bottom:0">
+      <div class="scanner-head">
+        <span class="scanner-title">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;vertical-align:-2px;margin-right:6px"><path d="M3 3h3v18H3zm4.5 0h1.5v18H7.5zm3 0h3v18h-3zm4.5 0h1.5v18H15zm3 0h3v18h-3z"/></svg>
+          Escáner de despacho
+        </span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost btn-sm" onclick="clearScan()">Limpiar</button>
+          <button class="btn btn-success btn-sm" onclick="exportScanXL()">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Excel
+          </button>
+        </div>
+      </div>
+      <div class="scanner-body">
+        <div class="scan-stats">
+          <div class="scan-stat"><div class="scan-stat-val ok" id="sc-ok">0</div><div class="scan-stat-label">✓ Encontrados</div></div>
+          <div class="scan-stat"><div class="scan-stat-val warn" id="sc-warn">0</div><div class="scan-stat-label">⚠ No en lista</div></div>
+          <div class="scan-stat"><div class="scan-stat-val" id="sc-total">0</div><div class="scan-stat-label">Total escaneados</div></div>
+        </div>
+        <div class="scan-input-wrap">
+          <input type="text" class="scan-input" id="scan-input"
+            placeholder="Escaneá o escribí el SKU..."
+            autocomplete="off" autocorrect="off" spellcheck="false"
+            onkeydown="if(event.key==='Enter')processScan(this.value)">
+          <button class="btn btn-primary" onclick="processScan(document.getElementById('scan-input').value)" style="height:44px;padding:0 18px;font-size:14px">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+        <div class="scan-log" id="scan-log">
+          <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">
+            Escaneá el primer SKU para empezar
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart de barras por día -->
+    <div class="card" style="margin-bottom:0">
+      <div class="card-head"><span class="card-title">Pedidos despachados por día</span><span id="des-chart-info" style="font-size:12px;color:var(--text-muted)"></span></div>
+      <div id="des-chart-wrap" style="padding:16px 18px">
+        <div class="empty" id="des-chart-empty" style="padding:24px"><div class="empty-icon">📦</div><div class="empty-sub">Marcá órdenes como "Enviada" para ver el gráfico</div></div>
+        <div id="des-chart" style="display:none;overflow-x:auto"></div>
+      </div>
+    </div>
+
+    <!-- Tabla detalle por día -->
+    <div class="card" style="margin-bottom:0">
+      <div class="card-head">
+        <span class="card-title">Detalle por día</span>
+        <div class="field" style="margin:0;min-width:160px">
+          <input type="text" id="des-day-search" placeholder="Buscar fecha, SKU..." oninput="renderDespachos()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;outline:none;width:100%">
+        </div>
+      </div>
+      <div id="des-empty" class="empty" style="padding:32px">
+        <div class="empty-icon">🚚</div>
+        <div class="empty-title">Sin despachos registrados</div>
+        <div class="empty-sub">Cuando una orden tiene estado "Enviada" aparece acá agrupada por fecha</div>
+      </div>
+      <div id="des-table-wrap" style="display:none;overflow:auto;max-height:380px">
+        <table>
+          <thead><tr>
+            <th>Fecha</th>
+            <th>Día</th>
+            <th style="text-align:center">Pedidos despachados</th>
+            <th style="text-align:center">Unidades</th>
+            <th>Plataformas</th>
+            <th>SKUs despachados</th>
+          </tr></thead>
+          <tbody id="des-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- VENTAS ML -->
+<div class="sec" id="sec-ventas">
+  <div class="sec-head">
+    <div class="sec-title">Ventas ML</div>
+    <div class="sec-sub">Las ventas se sincronizan solas desde Mercado Libre al abrir la app. Acá ves el historial por semana.</div>
+  </div>
+  <div class="sec-body">
+
+    <!-- Upload strip -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head" style="flex-direction:column;align-items:stretch;gap:10px">
+        <span class="card-title">Historial por semana</span>
+        <!-- Eliminar semana / acciones (las ventas se sincronizan solas; ya no hay sync manual ni carga Excel) -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          <select id="vml-del-sel" style="font-size:12px;padding:8px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);flex:1;min-width:140px;max-width:220px">
+            <option value="">Eliminar semana...</option>
+          </select>
+          <button onclick="vmlDeleteSelected()" class="btn btn-danger btn-sm" style="display:flex;align-items:center;gap:4px">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+            Eliminar
+          </button>
+        </div>
+        <!-- Fila 2: acciones -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          <button class="btn btn-danger btn-sm" onclick="vmlClearAll2()" style="flex:1;min-width:120px">
+            🗑 Limpiar todo
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="exportHubWithData()" style="flex:1;min-width:120px;display:flex;align-items:center;justify-content:center;gap:5px">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            Exportar con datos
+          </button>
+        </div>
+      </div>
+      <div id="vml-loading2" style="display:none;padding:8px 16px;align-items:center;gap:8px;font-size:12px;color:var(--text-soft)">
+        <div class="spin"></div><span id="vml-loadtxt2">Procesando...</span>
+      </div>
+      <div id="vml-sync-report" style="display:none;padding:10px 14px;font-size:12px;border-top:1px solid var(--border)"></div>
+    </div>
+
+    <!-- Tabla comparativa semanas -->
+    <div class="card" id="vml-table-card" style="display:none">
+      <div class="card-head">
+        <div>
+          <span class="card-title">SKU por semana</span>
+          <span id="vml-weeks-count" style="font-size:11px;color:var(--text-muted);margin-left:8px"></span>
+        </div>
+        <div class="srch">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="vml-search2" placeholder="Buscar SKU..." oninput="vmlRender2()">
+        </div>
+      </div>
+      <div style="overflow:auto">
+        <table id="vml-main-table">
+          <thead id="vml-thead2"></thead>
+          <tbody id="vml-tbody2"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Estado vacío -->
+    <div id="vml-empty2" style="text-align:center;padding:56px 20px;color:var(--text-soft)">
+      <div style="font-size:38px;margin-bottom:10px">📊</div>
+      <div style="font-weight:600;font-size:14px;margin-bottom:6px">Todavía no hay semanas cargadas</div>
+      <div style="font-size:12px">Subí el Excel de ventas de ML — cada archivo es una semana</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- RECLAMOS -->
+<div class="sec" id="sec-reclamos">
+  <div class="sec-head">
+    <div class="sec-title">Reclamos</div>
+    <div class="sec-sub">Ventas con problemas de Mercado Libre. Subí el Excel del reporte de reputación; el panel de arriba sale en vivo de la API.</div>
+  </div>
+  <div class="sec-body">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head" style="flex-direction:column;align-items:stretch;gap:10px">
+        <span class="card-title">Cargar reclamos</span>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          <div id="rec-dz" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="onRecDrop(event)" onclick="document.getElementById('rec-inp').click()" style="border:1px dashed var(--border2);border-radius:6px;padding:8px 16px;cursor:pointer;font-size:12px;color:var(--text-soft);display:flex;align-items:center;gap:6px;flex:1;min-width:240px;justify-content:center">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Subir Excel "Ventas con problemas" .xlsx
+            <input type="file" id="rec-inp" accept=".xlsx,.xls,.csv" style="display:none" onchange="onRecInput(event)">
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="clearReclamos()" style="min-width:90px">🗑 Limpiar</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted)">El reporte "Ventas con problemas" se exporta desde ML (Reputación → Ventas con problemas → Descargar). La API de claims NO lo reproduce (incluye preparación, cancelaciones y cerrados que la API no expone), por eso la lista va por Excel.</div>
+      </div>
+      <div id="rec-loading" style="display:none;padding:8px 16px;align-items:center;gap:8px;font-size:12px;color:var(--text-soft)"><div class="spin"></div><span>Procesando...</span></div>
+    </div>
+    <div id="rec-reputation"></div>
+    <div id="rec-empty" style="text-align:center;padding:60px 20px;color:var(--text-soft)">
+      <div style="font-size:40px;margin-bottom:12px">📋</div>
+      <div style="font-weight:600;font-size:14px;margin-bottom:6px">Sin reclamos cargados</div>
+      <div style="font-size:13px">Subí el Excel de <strong>Ventas con problemas</strong> de Mercado Libre.</div>
+    </div>
+    <div id="rec-content" style="display:none">
+      <div id="rec-stats"></div>
+      <div class="card">
+        <div class="card-head">
+          <div><span class="card-title">Detalle de reclamos</span><span id="rec-count" style="font-size:11px;color:var(--text-muted);margin-left:8px"></span></div>
+          <div class="srch"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" id="rec-search" placeholder="Buscar..." oninput="recSearch()"></div>
+        </div>
+        <div style="overflow:auto">
+          <table class="data-table">
+            <thead><tr><th>Fecha venta</th><th>N. venta</th><th>Producto</th><th>Tipo</th><th>Detalle</th><th>N. reclamo</th><th>Fecha reclamo</th><th>Exclusión</th></tr></thead>
+            <tbody id="rec-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROMOS -->
+<div class="sec" id="sec-promos">
+  <div class="sec-head">
+    <div class="sec-title">Promociones</div>
+    <div class="sec-sub">Gestión masiva de promociones por título/modelo o SKU. Cargás las publicaciones, ves sus promos, y salís o re-aplicás por cuotas. Previsualizá siempre antes — escribe en Mercado Libre.</div>
+  </div>
+  <div class="sec-body">
+    <div class="pxtabs">
+      <button class="pxtab active" data-pxtab="promos" onclick="pxTab('promos')">Promociones activas <span class="pxtab-n" id="pxn-nuevas" title="Promociones NUEVAS que antes no estaban — entrá a revisarlas" style="display:none;background:#dc2626;color:#fff">0</span></button>
+      <button class="pxtab" data-pxtab="free" onclick="pxTab('free')">🟢 Sin costo <span class="pxtab-n" id="pxn-free">0</span></button>
+      <button class="pxtab" data-pxtab="cost" onclick="pxTab('cost')">Cuestan extra <span class="pxtab-n" id="pxn-cost">0</span></button>
+      <button class="pxtab" data-pxtab="incoh" onclick="pxTab('incoh')">vs Maestro <span class="pxtab-n" id="pxn-incoh" title="Descuento o precio de lista que se aleja del maestro — tildá y corregí al % del maestro">0</span></button>
+      <button class="pxtab" data-pxtab="cayo" onclick="pxTab('cayo')">⚠ Cayó de promo <span class="pxtab-n" id="pxn-cayo" title="Publicaciones que perdieron el descuento (venden a precio full) — la última en caer y las más importantes primero">0</span></button>
+      <button class="pxtab" data-pxtab="otros" onclick="pxTab('otros')">Otros <span class="pxtab-n" id="pxn-otros">0</span></button>
+    </div>
+    <div id="promo-precio-controls" style="display:none;align-items:center;gap:14px;flex-wrap:wrap;margin:10px 0 8px">
+      <span id="live-precio" class="live-dot" role="button" tabindex="0" title="Estado del dato — clic para actualizar en vivo"></span>
+      <span id="promo-precio-count" style="font-size:11px;color:var(--text-muted)"></span>
+      <div id="promo-precio-loading" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--text-soft)"><div class="spin"></div><span id="promo-precio-txt">Analizando…</span></div>
+    </div>
+    <!-- TAB 1: Promociones activas + gestión masiva (lo que era la sección PROMOS) -->
+    <div class="pxtab-panel" data-pxpanel="promos" style="display:block">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head"><div><span class="card-title">Tus promociones activas</span><span id="promo-list-count" style="font-size:11px;color:var(--text-muted);margin-left:8px"></span></div></div>
+      <div id="promo-list" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div><span class="card-title">Publicaciones</span><span id="promo-load-count" style="font-size:11px;color:var(--text-muted);margin-left:8px"></span></div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:12px 0">
+        <div style="flex:1;min-width:240px">
+          <input type="text" id="promo-term" autocomplete="off" placeholder='Buscá por título, modelo o SKU — ej. "Holy", "Thor", "W-7"' style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px">
+        </div>
+        <button id="promo-load-btn" onclick="promoLoad()" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:600;min-width:120px">Cargar</button>
+        <button onclick="promoReindex()" class="btn btn-sm" title="Re-bajar el índice del catálogo (título + modelo + SKU)" style="min-width:90px">↻ Reindexar</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin:-4px 0 6px">Una sola caja: escribí el <b>título</b>, el <b>modelo</b> o un <b>SKU</b>. El SKU se resuelve al modelo con el Excel maestro (cargalo una vez abajo) y trae todas las publicaciones de ese modelo. La 1ª búsqueda indexa el catálogo (~25s, después queda cacheado). <span id="promo-idx-age" style="color:var(--text-soft)"></span></div>
+      <div style="font-size:11px;color:var(--text-muted);margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span>Maestro <b>SKU ↔ modelo</b> (Excel con columnas SKU y Nombre Modelo):</span>
+        <input type="file" id="promo-sku-file" accept=".xlsx,.xls" onchange="window.promoLoadSkuMaster&&window.promoLoadSkuMaster(this.files[0])" style="font-size:11px">
+      </div>
+      <div id="promo-loading" style="display:none;padding:6px 0;align-items:center;gap:8px;font-size:12px;color:var(--text-soft)"><div class="spin"></div><span id="promo-loadtxt">Buscando…</span></div>
+
+      <div id="promo-actions" style="display:none;border-top:1px solid var(--border);margin-top:10px;padding-top:12px">
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Reaplicar por cuotas (salir de todas + volver al % exacto). Las campañas de ML usan su propia duración; tu Descuento propio se aplica por 14 días.</div>
+            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+              <div><label style="font-size:10px;color:var(--text-muted);display:block">Premium (con cuotas) %</label><input type="number" id="promo-con" min="1" max="80" value="65" style="width:90px;padding:6px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px"></div>
+              <div><label style="font-size:10px;color:var(--text-muted);display:block">Clásica (sin cuotas) %</label><input type="number" id="promo-sin" min="1" max="80" value="69" style="width:90px;padding:6px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px"></div>
+              <button id="promo-cuotas-prev" onclick="promoCuotasPreview()" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:600">Previsualizar</button>
+              <button id="promo-cuotas-exec" onclick="promoCuotasExecute()" class="btn btn-sm" disabled style="background:#16a34a;color:#fff;border-color:#16a34a;font-weight:600">Ejecutar</button>
+            </div>
+          </div>
+          <div style="margin-left:auto">
+            <button id="promo-leave-btn" onclick="promoLeaveAll()" class="btn btn-danger btn-sm">Salir de TODAS las promos</button>
+          </div>
+        </div>
+      </div>
+      <div id="promo-report" style="font-size:12px;margin-top:8px"></div>
+      <div id="promo-cards" style="margin-top:12px;display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    </div><!-- /panel Promociones activas (el tab Pendientes se unificó acá: cada campaña se expande con sus ofertas) -->
+    <!-- TABS de coherencia de precios + oportunidades (las llena promoPriceIncong) -->
+    <div class="pxtab-panel" data-pxpanel="free" style="display:none"><div id="pxbody-free"></div></div>
+    <div class="pxtab-panel" data-pxpanel="cost" style="display:none"><div id="pxbody-cost"></div></div>
+    <div class="pxtab-panel" data-pxpanel="incoh" style="display:none"><div id="pxbody-incoh"></div></div>
+    <div class="pxtab-panel" data-pxpanel="cayo" style="display:none"><div id="pxbody-cayo"></div></div>
+    <div class="pxtab-panel" data-pxpanel="otros" style="display:none"><div id="pxbody-otros"></div></div>
+  </div>
+</div>
+
+<!-- PUBLICACIONES · wizard de swap de artículo (Parka reusa publicaciones) -->
+<div class="sec" id="sec-publicaciones">
+  <div class="sec-head">
+    <div class="sec-title">Edición · SWAP de artículo</div>
+    <div class="sec-sub">Cambio de artículo dentro de una publicación (swap): elegís la candidata, buscás el modelo destino y una publicación FUENTE que dona todo (fotos, características, guía, SKUs, precio y descuento — verificados contra el maestro), mirás el pre-chequeo y ejecutás. Todo verificado y registrado.</div>
+  </div>
+  <div class="sec-body">
+    <!-- (La carga del Excel maestro vive en Precios → Maestro: "Reemplazar desde Excel".) -->
+    <!-- Sugeridor de candidatas a swap: alta visibilidad × mala conversión, con el porqué -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head"><div><span class="card-title">🎯 Candidatas a swap</span><span style="font-size:11px;color:var(--text-muted);margin-left:8px">Publicaciones con muchas visitas que convierten poco — y el porqué (talles sin stock, precio alto, sin descuento). Vos elegís.</span></div></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0">
+        <button id="swap-sugg-btn" onclick="swapSuggest()" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:600">Sugerir candidatas</button>
+        <span id="swap-sugg-st" style="font-size:11px;color:var(--text-soft)"></span>
+      </div>
+      <div id="swap-sugg-results"></div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head"><div><span class="card-title">Elegir publicación</span></div></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0">
+        <input type="text" id="pub-term" placeholder="MLA, modelo o título…" style="flex:1;min-width:220px;padding:7px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px" oninput="pubSearch()">
+      </div>
+      <div id="pub-results"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div><span class="card-title">Swap de artículo</span></div></div>
+      <div id="pub-wizard" style="margin-top:8px;font-size:12px;color:var(--text-soft)">Elegí una publicación arriba para empezar.</div>
+    </div>
+  </div>
+</div>
+
+<!-- INCONGRUENCIAS · STOCK -->
+<div class="sec" id="sec-incong-stock">
+  <div class="sec-head">
+    <div class="sec-title">Incongruencias · Stock</div>
+    <div class="sec-sub">Detecta artículos cuyas publicaciones declaran stock muy distinto entre sí. Es el primer apartado de Incongruencias — se suman más controles acá.</div>
+  </div>
+  <div class="sec-body">
+    <div class="card">
+      <div class="card-head"><div><span class="card-title">Incongruencias de stock</span><span id="promo-incong-count" style="font-size:11px;color:var(--text-muted);margin-left:8px"></span></div></div>
+      <div style="font-size:11px;color:var(--text-muted);margin:8px 0">Revisa TODO el catálogo y marca artículos cuyas publicaciones declaran stock muy distinto — ej. 3 publicaciones de Thor con 1800 y una con 300. Compara cada publicación contra la <b>moda</b> del artículo (cuando ≥2 coinciden) y marca las que se desvían más del <b>50%</b>. Ordenado por <b>visitas</b> (las más vistas primero = casos más graves). Usa el índice del catálogo; la 1ª vez lo actualiza con el stock (~25s).</div>
+      <div style="margin:8px 0;display:flex;gap:8px;flex-wrap:wrap"><button id="promo-incong-btn" onclick="promoStockIncong()" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:600">Revisar incongruencias</button><button onclick="promoStockIncong(true)" class="btn btn-sm" title="Re-escanea el catálogo en vivo desde Mercado Libre y actualiza el dato compartido para todos">↻ Recalcular en vivo</button></div>
+      <div id="promo-incong-loading" style="display:none;padding:6px 0;align-items:center;gap:8px;font-size:12px;color:var(--text-soft)"><div class="spin"></div><span id="promo-incong-txt">Analizando…</span></div>
+      <div id="promo-incong-results" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- INCONGRUENCIAS · CAÍDAS DE STOCK -->
+<div class="sec" id="sec-incong-drops">
+  <div class="sec-head">
+    <div class="sec-title">Incongruencias · Caídas de stock</div>
+    <div class="sec-sub">Red de seguridad para cuando el sync de stock falla y deja publicaciones en 0 (y ML las pausa). Detecta el estado roto ahora, y caídas bruscas día-a-día.</div>
+  </div>
+  <div class="sec-body">
+    <div class="card">
+      <div class="card-head"><div><span class="card-title">Caídas de stock</span><span id="promo-drops-count" style="font-size:11px;color:var(--text-muted);margin-left:8px"></span></div></div>
+      <div style="font-size:11px;color:var(--text-muted);margin:8px 0">Dos chequeos: <b>(1) en 0 ahora</b> — publicaciones con stock 0 cuyo artículo tiene stock en otra publicación (síntoma típico de falla de sync, como pasó con Asgard); <b>(2) caídas vs ayer</b> — cayó a 0, cayó +60%, o pasó a pausada/revisión, comparando contra el <b>snapshot diario</b> (lo toma un cron del Worker 1×/día; la comparación día-a-día arranca cuando hay 2 días). Ordenado por visitas.</div>
+      <div style="margin:8px 0;display:flex;gap:8px;flex-wrap:wrap"><button id="promo-drops-btn" onclick="promoStockDrops()" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:600">Revisar caídas de stock</button><button onclick="promoStockDrops(true)" class="btn btn-sm" title="Re-escanea el catálogo en vivo desde Mercado Libre y actualiza el dato compartido para todos">↻ Recalcular en vivo</button></div>
+      <div id="promo-drops-loading" style="display:none;padding:6px 0;align-items:center;gap:8px;font-size:12px;color:var(--text-soft)"><div class="spin"></div><span id="promo-drops-txt">Analizando…</span></div>
+      <div id="promo-drops-results" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- INCONGRUENCIAS · GUÍA DE TALLES -->
+<div class="sec" id="sec-incong-talles">
+  <div class="sec-head">
+    <div class="sec-title">Incongruencias · Guía de talles</div>
+    <div class="sec-sub">Detecta publicaciones que tienen cargada la guía de talles de otro modelo (medidas equivocadas → devoluciones), o artículos que usan más de una versión de tabla.</div>
+  </div>
+  <div class="sec-body">
+    <div class="card">
+      <div class="card-head"><div><span class="card-title">Incongruencias de guía de talles</span><span id="promo-talles-count" style="font-size:11px;color:var(--text-muted);margin-left:8px"></span></div></div>
+      <div style="font-size:11px;color:var(--text-muted);margin:8px 0">Cada publicación referencia una <b>guía de talles</b> de ML (ej. “M114 THOR 2024 prenda”). Si una publicación de Thor tiene cargada la tabla de <b>otro modelo</b> (ej. “M112 Vesubio”), el comprador ve medidas equivocadas. Marco: <b>modelo equivocado</b> (la tabla menciona otro modelo), <b>sin tabla</b> (el resto del artículo la tiene), y <b>versiones distintas</b> (el mismo artículo usa más de una tabla). Ordenado por gravedad y visitas. La 1ª vez actualiza el índice con las guías (~25s).</div>
+      <div style="margin:8px 0;display:flex;gap:8px;flex-wrap:wrap"><button id="promo-talles-btn" onclick="promoTallesIncong()" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:600">Revisar guías de talles</button><button onclick="promoTallesIncong(true)" class="btn btn-sm" title="Re-escanea el catálogo en vivo desde Mercado Libre y actualiza el dato compartido para todos">↻ Recalcular en vivo</button></div>
+      <div id="promo-talles-loading" style="display:none;padding:6px 0;align-items:center;gap:8px;font-size:12px;color:var(--text-soft)"><div class="spin"></div><span id="promo-talles-txt">Analizando…</span></div>
+      <div id="promo-talles-results" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- INCONGRUENCIAS · DESCRIPCIÓN -->
+<div class="sec" id="sec-incong-desc">
+  <div class="sec-head">
+    <div class="sec-title">Incongruencias · Descripción</div>
+    <div class="sec-sub">Detecta publicaciones cuya descripción quedó pegada de otro artículo (al reemplazar la publicación se olvidaron de cambiarla).</div>
+  </div>
+  <div class="sec-body">
+    <div class="card">
+      <div class="card-head"><div><span class="card-title">Incongruencias de descripción</span><span id="promo-desc-count" style="font-size:11px;color:var(--text-muted);margin-left:8px"></span></div></div>
+      <div style="font-size:11px;color:var(--text-muted);margin:8px 0">Las descripciones arrancan con el modelo (“Campera Puffer Thor…”). Comparo el <b>arranque</b> de cada descripción contra el modelo del artículo: si arranca con <b>otro modelo</b> conocido (quedó la descripción vieja al reemplazar la publicación) → lo marco. También listo las que <b>no nombran el modelo</b> al principio (puede ser genérica o estar mal). Ordenado por visitas. Trae 1 descripción por publicación (~1–2 min la 1ª vez; después queda cacheado 6h).</div>
+      <div style="margin:8px 0;display:flex;gap:8px;flex-wrap:wrap"><button id="promo-desc-btn" onclick="promoDescIncong()" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:600">Revisar descripciones</button><button onclick="promoDescIncong(true)" class="btn btn-sm" title="Re-trae las descripciones en vivo y actualiza el dato compartido para todos">↻ Recalcular en vivo</button></div>
+      <div id="promo-desc-loading" style="display:none;padding:6px 0;align-items:center;gap:8px;font-size:12px;color:var(--text-soft)"><div class="spin"></div><span id="promo-desc-txt">Analizando…</span></div>
+      <div id="promo-desc-results" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- INCONGRUENCIAS · SKU -->
+<div class="sec" id="sec-incong-sku">
+  <div class="sec-head">
+    <div class="sec-title">Incongruencias · SKU</div>
+    <div class="sec-sub">Detecta publicaciones con el SKU mal cargado: un talle asignado al talle equivocado, o una base (modelo+color) que no coincide con el Excel maestro (typo o color mal escrito → el sistema no le descuenta stock).</div>
+  </div>
+  <div class="sec-body">
+    <div class="card">
+      <div class="card-head"><div><span class="card-title">Incongruencias de SKU</span><span id="promo-sku-count" style="font-size:11px;color:var(--text-muted);margin-left:8px"></span></div></div>
+      <div style="font-size:11px;color:var(--text-muted);margin:8px 0">El <b>Excel maestro</b> (SKU↔modelo) es la fuente de verdad: cada SKU es real, solo falta el <b>talle</b> al final (<code>M-114-BLK-</code> → <code>M-114-BLK-S</code>). Comparo el <b>SKU de cada variación</b> de cada publicación contra el Excel: marco <b>talle mal asignado</b> (el SKU dice un talle pero la variación es otro), <b>SKU fuera del Excel</b> (la base no coincide con ninguna — typo/color) y <b>sin talle</b>. La 1ª vez actualiza el índice con las variaciones (~25s). Si falta el maestro, cargalo en <b>Promos → “Cargar SKU↔modelo”</b>.</div>
+      <div style="margin:8px 0;display:flex;gap:8px;flex-wrap:wrap"><button id="promo-sku-btn" onclick="promoSkuIncong()" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:600">Revisar SKUs</button><button onclick="promoSkuIncong(true)" class="btn btn-sm" title="Re-escanea el catálogo en vivo desde Mercado Libre (con las variaciones) y actualiza el dato compartido para todos">↻ Recalcular en vivo</button></div>
+      <div id="promo-sku-loading" style="display:none;padding:6px 0;align-items:center;gap:8px;font-size:12px;color:var(--text-soft)"><div class="spin"></div><span id="promo-sku-txt">Analizando…</span></div>
+      <div id="promo-sku-results" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- EDICIÓN · EDITOR MASIVO (hub: una selección, cualquier campo) -->
+<div class="sec" id="sec-edicion">
+  <div class="sec-head">
+    <div class="sec-title">Edición · Editor masivo</div>
+    <div class="sec-sub">Filtrá publicaciones una vez y editá el campo que quieras en masa. Escribe en Mercado Libre — previsualizá y bajá backup antes. Cada escritura queda registrada y verifica el modelo vivo (excluye publicaciones que cambiaron de artículo).</div>
+  </div>
+  <div class="sec-body">
+    <!-- Paso 1: selección compartida -->
+    <div class="card">
+      <div class="card-head"><div><span class="card-title">1 · Elegí publicaciones</span><span style="font-size:11px;color:var(--text-muted);margin-left:8px">Filtrá por modelo, SKU o título (trae activas y pausadas). La selección se comparte entre los campos, y cada fila trae su botón para <b>pausar/activar</b>.</span></div></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin:10px 0">
+        <div style="flex:1;min-width:220px"><label style="font-size:10px;color:var(--text-muted);display:block">Filtro (modelo / SKU / título)</label><input type="text" id="ed-term" autocomplete="off" placeholder='ej. Thor' onkeydown="if(event.key==='Enter')edicionFilter()" style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px"></div>
+        <button id="ed-filter-btn" onclick="edicionFilter()" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:600">Filtrar</button>
+      </div>
+      <div id="ed-filter-result" style="font-size:12px;margin:6px 0"></div>
+    </div>
+    <!-- Paso 2: qué editás -->
+    <div class="card">
+      <div class="card-head"><div><span class="card-title">2 · Qué editás</span></div></div>
+      <div id="ed-fieldtabs" style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px">
+        <button class="btn btn-sm ed-ftab" data-edtab="desc"   onclick="edicionField('desc')" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9">Descripción</button>
+        <button class="btn btn-sm ed-ftab" data-edtab="attr"   onclick="edicionField('attr')">Características</button>
+        <button class="btn btn-sm ed-ftab" data-edtab="vars"   onclick="edicionField('vars')">Variantes y fotos</button>
+        <button class="btn btn-sm ed-ftab" data-edtab="title"  onclick="edicionField('title')">Título</button>
+        <button class="btn btn-sm ed-ftab" data-edtab="grid"   onclick="edicionField('grid')">Guía de talles</button>
+        <button class="btn btn-sm ed-ftab" data-edtab="price"  onclick="edicionField('price')">Precio</button>
+        <button class="btn btn-sm ed-ftab" data-edtab="offstore" onclick="edicionField('offstore')">Tienda oficial</button>
+      </div>
+
+      <!-- Panel Descripción -->
+      <div class="ed-fpanel" data-edfield="desc">
+        <div style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Escribís la descripción <b>una sola vez</b> y se aplica a todas las publicaciones tildadas, <b>pisando</b> la descripción actual de cada una. Si escribís <b>{modelo}</b>, en cada publicación se reemplaza por su modelo — ej. <i>«Campera Puffer {modelo} impermeable»</i> queda «Campera Puffer <b>Thor</b> impermeable» en la de Thor y «…<b>Baker</b>…» en la de Baker. Bajá el backup antes por las dudas.</div>
+        <div style="margin:0 0 10px"><textarea id="ed-text" rows="16" placeholder="Campera Puffer {modelo}…" style="width:100%;min-height:340px;padding:12px 14px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:14px;line-height:1.6;font-family:inherit;resize:vertical"></textarea></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button id="ed-preview-btn" onclick="edicionPreview()" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:600">Previsualizar</button>
+          <button id="ed-backup-btn" onclick="edicionBackup()" class="btn btn-sm">Descargar backup actual</button>
+          <button id="ed-exec" onclick="edicionExecute()" class="btn btn-sm" disabled style="background:#dc2626;color:#fff;border-color:#dc2626;font-weight:600">Aplicar</button>
+        </div>
+        <div id="ed-preview" style="margin-top:10px"></div>
+        <div id="ed-report" style="font-size:12px;margin-top:8px"></div>
+      </div>
+
+      <!-- Panel Características (guiado por la ficha real de la categoría de ML) -->
+      <div class="ed-fpanel" data-edfield="attr" style="display:none">
+        <div style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Mismos campos que ML (Marca · Modelo · <b>Tipo de prenda</b> · Género + secundarias). Arranca <b>pre-cargado con los valores actuales</b> de la publicación de más visitas; <b>tildá</b> lo que quieras cambiar y aplicá a las seleccionadas. <b>Verificación por ítem:</b> si ML responde 200 pero no aplica un valor (restringido), te aviso y no lo cuento como aplicado.</div>
+        <div id="ed-caract-head" style="font-size:12px;margin:0 0 10px;color:var(--text)"></div>
+        <div id="ed-caract" style="margin:6px 0"></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+          <button id="edcaract-exec" onclick="edicionCaractApply()" class="btn btn-sm" style="background:#dc2626;color:#fff;border-color:#dc2626;font-weight:600">Aplicar</button>
+          <a href="#" onclick="edicionCaractLoad(true);return false" style="font-size:11px;color:#0ea5e9;text-decoration:none">↻ recargar ficha</a>
+        </div>
+        <div id="edcaract-report" style="font-size:12px;margin-top:8px"></div>
+      </div>
+
+      <!-- Panel Variantes y fotos (EN MASA: referencia = más visitas; editás stock/SKU y aplicás a las seleccionadas) -->
+      <div class="ed-fpanel" data-edfield="vars" style="display:none">
+        <div style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Editás en masa las <b>seleccionadas arriba</b>. La grilla arranca con la de <b>más visitas</b> (referencia): tocás stock/SKU por <b>color × talle</b> y aplicás a todas (matchea por color+talle). Fotos y borrar-color: próximo paso.</div>
+        <div id="ed-vars-head" style="font-size:12px;margin:0 0 10px;color:var(--text)"></div>
+        <div id="ed-vars-detail"></div>
+        <div id="ed-vars-actions" style="display:none;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
+          <button id="edv-stock-btn" onclick="edicionVarsApply('stock')" class="btn btn-sm" style="background:#dc2626;color:#fff;border-color:#dc2626;font-weight:600">Aplicar stock a las seleccionadas</button>
+          <button id="edv-sku-btn" onclick="edicionVarsApply('sku')" class="btn btn-sm" style="background:#dc2626;color:#fff;border-color:#dc2626;font-weight:600">Aplicar SKU a las seleccionadas</button>
+          <a href="#" onclick="edicionVarsRender();return false" style="font-size:11px;color:#0ea5e9;text-decoration:none">↻ recargar referencia</a>
+        </div>
+        <div id="ed-vars-report" style="font-size:12px;margin-top:8px"></div>
+      </div>
+
+      <!-- Panel Título (POR PUBLICACIÓN: una fila por MLA con su título vivo; editás y aplicás; ML puede
+           ignorar con warning → verificación por read-back). El término del título entra mejor si la palabra
+           está en Tipo de prenda (pestaña Características) y quedan caracteres libres. -->
+      <div class="ed-fpanel" data-edfield="title" style="display:none">
+        <div style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Una fila por <b>publicación (MLA)</b> de las seleccionadas arriba, con su <b>título vivo</b>. Editás y aplicás. <b>El título es por publicación</b> (no se comparte). ML puede tener limitaciones con ventas y a veces responde 200 pero <b>no aplica</b> → te lo verifico releyendo el título y te aviso. Tip: para meter una palabra (ej. «Puffer»), primero seteala en <b>Tipo de prenda</b> (pestaña Características) — entra mejor si sobran caracteres.</div>
+        <div id="ed-title-head" style="font-size:12px;margin:0 0 10px;color:var(--text)"></div>
+        <div id="ed-title-grid"><div style="font-size:12px;color:var(--text-soft)">Filtrá y tildá publicaciones arriba; después volvé a este tab.</div></div>
+        <div id="ed-title-actions" style="display:none;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
+          <button id="edt-exec" onclick="edicionTitleApply()" class="btn btn-sm" style="background:#dc2626;color:#fff;border-color:#dc2626;font-weight:600">Aplicar títulos cambiados</button>
+          <a href="#" onclick="edicionTitleRender();return false" style="font-size:11px;color:#0ea5e9;text-decoration:none">↻ recargar títulos vivos</a>
+        </div>
+        <div id="ed-title-report" style="font-size:12px;margin-top:8px"></div>
+      </div>
+
+      <!-- Panel Guía de talles (asignar una guía a las seleccionadas: setea SIZE_GRID_ID + fila por variación) -->
+      <div class="ed-fpanel" data-edfield="grid" style="display:none">
+        <div style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Elegí una de <b>tus guías</b> y asignala a las publicaciones tildadas. El talle de cada variación se mapea a su fila. <b>El match es exacto</b> (ej. «XXL» ≠ «2XL»): una pub se asigna solo si TODOS sus talles están en la guía; si falta alguno, la salteo y te aviso cuál (asignar con un talle sin fila = ML la pausa). Guarda registro y verifica que no quede pausada.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px">
+          <span style="font-size:12px;color:var(--text)">Guía:</span>
+          <input id="ed-grid-pick" list="ed-grid-list" placeholder="elegí tu guía…" oninput="edicionGridPickChanged()" style="width:320px;font-size:12px;padding:6px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)"><datalist id="ed-grid-list"></datalist>
+        </div>
+        <div id="ed-grid-head" style="font-size:12px;margin:0 0 8px;color:var(--text)"></div>
+        <div id="ed-grid-preview"><div style="font-size:12px;color:var(--text-soft)">Filtrá y tildá publicaciones arriba, elegí una guía, y te muestro cuáles se pueden asignar.</div></div>
+        <div id="ed-grid-actions" style="display:none;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
+          <button id="edg-exec" onclick="edicionGridApply()" class="btn btn-sm" style="background:#dc2626;color:#fff;border-color:#dc2626;font-weight:600">Asignar a las seleccionadas</button>
+          <a href="#" onclick="edicionGridPreview();return false" style="font-size:11px;color:#0ea5e9;text-decoration:none">↻ recalcular</a>
+        </div>
+        <div id="ed-grid-report" style="font-size:12px;margin-top:8px"></div>
+      </div>
+
+      <!-- Panel Precio (reprecio masivo: salir de promos → cambiar precio → reentrar al precio nuevo) -->
+      <div class="ed-fpanel" data-edfield="price" style="display:none">
+        <div style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Ponés <b>un precio de lista</b> y se aplica a las tildadas. Por cada una: <b>sale de las promos</b> → <b>cambia el precio</b> → <b>reentra las promos</b> al precio nuevo (descuento del <b>maestro</b> por modelo/tier). Salteo las que ya están a ese precio y las que tienen <b>automatización de precios de ML</b> activa (el PUT se ignoraría). Read-back + registro. <b>Mueve plata</b>: revisá el preview antes.</div>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 0 10px">
+          <span style="font-size:12px">Precio de lista nuevo:</span>
+          <label style="font-size:12px;display:flex;gap:6px;align-items:center;color:var(--text)"><b style="color:#6d28d9">Premium</b> <input id="ed-price-prem" type="number" min="1000" step="1" oninput="edicionPricePreviewDebounced()" style="width:118px;font-size:13px;padding:6px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)"></label>
+          <label style="font-size:12px;display:flex;gap:6px;align-items:center;color:var(--text)"><b style="color:#0369a1">Clásica</b> <input id="ed-price-clas" type="number" min="1000" step="1" oninput="edicionPricePreviewDebounced()" style="width:118px;font-size:13px;padding:6px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text)"></label>
+          <span style="font-size:10px;color:var(--text-soft)">por defecto, los del maestro</span>
+        </div>
+        <div id="ed-price-preview"><div style="font-size:12px;color:var(--text-soft)">Filtrá y tildá publicaciones, poné el precio nuevo, y te muestro cuáles se van a repreciar.</div></div>
+        <div id="ed-price-actions" style="display:none;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
+          <button id="edp-exec" onclick="edicionPriceApply()" class="btn btn-sm" style="background:#dc2626;color:#fff;border-color:#dc2626;font-weight:600">Repreciar las seleccionadas</button>
+          <a href="#" onclick="edicionPricePreview();return false" style="font-size:11px;color:#0ea5e9;text-decoration:none">↻ recalcular</a>
+        </div>
+        <div id="ed-price-report" style="font-size:12px;margin-top:8px"></div>
+      </div>
+
+      <!-- Panel Tienda oficial (mover pubs entre las tiendas oficiales de la cuenta) -->
+      <div class="ed-fpanel" data-edfield="offstore" style="display:none">
+        <div style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Mové las publicaciones tildadas entre las <b>tiendas oficiales de la cuenta</b>. Elegí la tienda destino (aparece resaltada la actual de la referencia); las que ya están en la destino se saltean. <b>Con ventas se puede.</b> Guarda registro y verifica por read-back.</div>
+        <div id="ed-off-head" style="font-size:12px;margin:0 0 10px;color:var(--text)"></div>
+        <div id="ed-off-preview"><div style="font-size:12px;color:var(--text-soft)">Filtrá y tildá publicaciones, elegí la tienda destino, y te muestro cuáles se van a mover.</div></div>
+        <div id="ed-off-actions" style="display:none;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
+          <button id="edoff-exec" onclick="edicionOffStoreApply()" class="btn btn-sm" style="background:#dc2626;color:#fff;border-color:#dc2626;font-weight:600">Mover a las seleccionadas</button>
+          <a href="#" onclick="edicionOffStorePreview();return false" style="font-size:11px;color:#0ea5e9;text-decoration:none">↻ recalcular</a>
+        </div>
+        <div id="ed-off-report" style="font-size:12px;margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DEVOLUCIONES -->
+<div class="sec" id="sec-devoluciones">
+  <div class="sec-head">
+    <div class="sec-title">Devoluciones por talle</div>
+    <div class="sec-sub">Por modelo: qué % de las devoluciones es por talle y si el artículo corre grande o chico. El SKU sale de la venta (no de la publicación), el motivo de la API de Mercado Libre.</div>
+  </div>
+  <div class="sec-body">
+
+    <!-- Sync -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-body" style="padding:12px 16px">
+        <div style="font-size:12px;color:var(--text-muted)">Las devoluciones se sincronizan solas desde Mercado Libre al abrir la app. <span id="dev-sync-meta" style="color:var(--text-soft)"></span></div>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div id="dev-empty" style="text-align:center;padding:60px 20px;color:var(--text-soft)">
+      <div style="font-size:40px;margin-bottom:12px">📦↩</div>
+      <div style="font-weight:600;font-size:14px;margin-bottom:6px">Sin devoluciones cargadas</div>
+      <div style="font-size:13px">Tocá <strong>Sincronizar</strong> para traer las devoluciones de Mercado Libre</div>
+    </div>
+
+    <!-- Content -->
+    <div id="dev-content" style="display:none">
+      <!-- Resumen global -->
+      <div id="dev-summary" style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px"></div>
+
+      <!-- Motivos (detalle con %) -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-head"><span class="card-title">Motivos de devolución</span><span id="dev-motivos-sub" style="font-size:11px;color:var(--text-muted)"></span></div>
+        <div class="card-body" id="dev-motivos" style="padding:12px 16px"></div>
+      </div>
+
+      <!-- Calce por talle y género (matriz) -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-head"><span class="card-title">Calce por talle y género</span><span style="font-size:11px;color:var(--text-muted)">% de cada caso por talle — qué talle empuja el problema</span></div>
+        <div class="card-body" id="dev-calce" style="padding:8px 12px;overflow-x:auto"></div>
+      </div>
+
+      <!-- Controles -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-body" style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:10px 16px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:11px;color:var(--text-muted)">Ordenar por</label>
+            <select id="dev-sort" onchange="devPaint()" style="padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px">
+              <option value="rate">Mayor % talle s/ventas</option>
+              <option value="talle">Más devoluciones por talle</option>
+              <option value="ventas">Más ventas</option>
+              <option value="total">Más devoluciones totales</option>
+              <option value="grande">Más "corre grande"</option>
+              <option value="chico">Más "corre chico"</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:11px;color:var(--text-muted)">Mín. devol. de talle p/ veredicto</label>
+            <input id="dev-minsample" type="number" value="5" min="1" oninput="devPaint()" style="width:56px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px">
+          </div>
+          <span id="dev-table-sub" style="font-size:11px;color:var(--text-muted);margin-left:auto"></span>
+        </div>
+      </div>
+
+      <!-- Tabla por modelo (se construye en JS; clic en una fila = desglose por talle) -->
+      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto"><div id="dev-table"></div></div></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:8px"><strong>% talle s/ventas</strong> = casos por talle (grande+chico) ÷ ventas del período. Incluye <strong>devoluciones y cambios</strong> (en Parka los cambios son mínimos, ~1%). <strong>Talle</strong> = grande + chico + "no coincide con la guía"; NO incluye "producto distinto al pedido" (error de armado) ni arrepentidos. Clic en un modelo → desglose por talle (qué talle se devuelve más y por qué).</div>
+    </div>
+  </div>
+</div>
+
+<!-- RESUMEN -->
+<div class="sec active" id="sec-analisis">
+  <div class="sec-head">
+    <div class="sec-title">Resumen</div>
+    <div class="sec-sub">Métricas clave — cargá el Excel en Ventas ML para activarlo</div>
+  </div>
+  <div class="sec-body">
+    <div id="rsmn-empty" style="text-align:center;padding:60px 20px;color:var(--text-soft)">
+      <div style="font-size:40px;margin-bottom:12px">📈</div>
+      <div style="font-weight:600;font-size:14px;margin-bottom:6px">Sin datos</div>
+      <div style="font-size:13px">Subí el Excel en <strong>Ventas ML</strong> para ver el resumen</div>
+    </div>
+    <div id="rsmn-content" style="display:none">
+
+      <!-- Fila 1: Top ventas + Tendencia semanal -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="card">
+          <div class="card-head"><span class="card-title">🏆 Top 10 más vendidos</span><span id="rsmn-total-badge" style="font-size:11px;color:var(--text-muted)"></span></div>
+          <div class="card-body" style="padding:0"><div id="rsmn-top10"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">📅 Tendencia semanal</span></div>
+          <div class="card-body" id="rsmn-chart" style="padding:8px 0 4px;overflow-x:auto"></div>
+        </div>
+      </div>
+
+      <!-- Fila 2: Colores más vendidos — Hombre y Mujer (color elegido en la venta; solo abrigos) -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-head"><span class="card-title">🎨 Colores más vendidos</span><span id="rsmn-color-sub" style="font-size:11px;color:var(--text-muted)">Color elegido en la venta · abrigos clasificados</span></div>
+        <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">👨 Hombre <span id="rsmn-color-h-tot" style="font-weight:400;color:var(--text-muted)"></span></div>
+            <div style="display:flex;align-items:center;gap:16px"><div id="rsmn-pie-colors-h" style="flex-shrink:0"></div><div id="rsmn-pie-colors-h-legend" style="flex:1;font-size:12px"></div></div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">👩 Mujer <span id="rsmn-color-m-tot" style="font-weight:400;color:var(--text-muted)"></span></div>
+            <div style="display:flex;align-items:center;gap:16px"><div id="rsmn-pie-colors-m" style="flex-shrink:0"></div><div id="rsmn-pie-colors-m-legend" style="flex:1;font-size:12px"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fila 3: Distribución por talle — Hombre y Mujer (solo abrigos) -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-head"><span class="card-title">📐 Distribución por talle</span><span id="rsmn-talle-sub" style="font-size:11px;color:var(--text-muted)"></span></div>
+        <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">👨 Hombre <span id="rsmn-talle-h-tot" style="font-weight:400;color:var(--text-muted)"></span></div>
+            <div style="display:flex;align-items:center;gap:16px"><div id="rsmn-pie-talles-h" style="flex-shrink:0"></div><div id="rsmn-pie-talles-h-legend" style="flex:1;font-size:12px"></div></div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">👩 Mujer <span id="rsmn-talle-m-tot" style="font-weight:400;color:var(--text-muted)"></span></div>
+            <div style="display:flex;align-items:center;gap:16px"><div id="rsmn-pie-talles-m" style="flex-shrink:0"></div><div id="rsmn-pie-talles-m-legend" style="flex:1;font-size:12px"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fila 4: Crecimiento semana vs semana -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">📊 Crecimiento semana a semana</span><span id="rsmn-growth-sub" style="font-size:11px;color:var(--text-muted)"></span></div>
+        <div class="card-body" id="rsmn-growth" style="overflow-x:auto"></div>
+      </div>
+
+      <!-- Fila 5: Geografía de la demanda -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">📍 Ventas por provincia</span><span id="rsmn-geo-prov-sub" style="font-size:11px;color:var(--text-muted)"></span></div>
+        <div class="card-body"><div id="rsmn-geo-prov" style="position:relative;height:360px"></div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px">
+        <div class="card">
+          <div class="card-head"><span class="card-title">🚚 Demanda por forma de envío</span><span style="font-size:11px;color:var(--text-muted)">% semanal · Flex vs Correo</span></div>
+          <div class="card-body"><div id="rsmn-geo-forma" style="position:relative;height:280px"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">🗺️ Demanda por zona</span><span style="font-size:11px;color:var(--text-muted)">% semanal · top zonas</span></div>
+          <div class="card-body"><div id="rsmn-geo-zona" style="position:relative;height:280px"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- MODAL NUEVA ORDEN -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:100;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:10px;width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-md);border:1px solid var(--border)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px" id="modal-title">Nueva orden manual</span>
+      <button class="btn-ghost" onclick="closeModal()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+      <div class="fg fg2">
+        <div class="fsec">Datos de la orden</div>
+        <div class="field"><label>N° Orden *</label><input type="text" id="m-id" placeholder="001, 20240101..."></div>
+        <div class="field"><label>Fecha *</label><input type="date" id="m-date"></div>
+        <div class="field"><label>Canal de venta</label><input type="text" id="m-ch" placeholder="Instagram, showroom, local..."></div>
+        <div class="field"><label>Estado</label>
+          <select id="m-st"><option value="paid">Pagada</option><option value="pending">Pendiente</option><option value="shipped">Enviada</option><option value="cancelled">Cancelada</option></select>
+        </div>
+        <div class="fsec">Producto</div>
+        <div class="field"><label>SKU *</label><input type="text" id="m-sku" placeholder="MT-1234-S, B3002-M..."></div>
+        <div class="field"><label>Cantidad *</label><input type="number" id="m-qty" min="1" value="1"></div>
+        <div class="field" style="grid-column:1/-1"><label>Nombre del producto</label><input type="text" id="m-prod" placeholder="Campera Alchemy Oversize M"></div>
+        <div class="field" style="grid-column:1/-1"><label>Notas</label><textarea id="m-notes" placeholder="Observaciones, dirección, cliente..."></textarea></div>
+      </div>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveOrder()">Guardar orden</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+
+<script type="application/json" id="app-data">{"week_labels":["25-31 may","18-24 may","11-17 may","4-10 may","27 abr-3 may","20-26 abr","13-19 abr","6-12 abr","30 mar-5 abr","23-29 mar","16-22 mar","9-15 mar","2-8 mar","23 feb-1 mar","16-22 feb","9-15 feb","2-8 feb","26 ene-1 feb"],"week_totals":[5,1895,3666,680,648,302,211,261,114,143,150,158,148,87,50,83,58,7],"table":[{"a":"W-2038-BLACK","t":633,"w":[0,5,298,56,65,46,40,38,11,18,13,12,5,7,2,7,9,1]},{"a":"W-2049-BLACK","t":591,"w":[0,13,80,164,160,52,20,6,0,0,0,3,13,11,11,27,27,4]},{"a":"W-2066-BLK","t":579,"w":[0,0,419,37,26,20,14,7,4,4,3,32,10,2,0,1,0,0]},{"a":"W-7-BLK","t":578,"w":[0,87,293,39,34,11,8,16,9,20,10,19,10,12,6,3,1,0]},{"a":"M-114-BLACK","t":523,"w":[0,226,277,10,5,1,0,1,0,0,0,1,1,0,0,0,1,0]},{"a":"M-112-BLACK","t":460,"w":[1,93,245,41,34,18,9,9,2,0,2,1,2,0,2,0,1,0]},{"a":"W-8-BLK","t":413,"w":[1,150,205,10,41,3,0,1,0,1,1,0,0,0,0,0,0,0]},{"a":"M-1155-BLACK","t":248,"w":[0,78,150,15,4,1,0,0,0,0,0,0,0,0,0,0,0,0]},{"a":"W-2038-BEIGE","t":228,"w":[0,0,108,21,11,13,7,13,14,8,3,6,6,6,3,7,2,0]},{"a":"W-41 BLACK","t":226,"w":[0,38,46,11,15,16,11,25,12,13,7,12,8,8,1,2,1,0]},{"a":"M-112-GREEN","t":223,"w":[0,61,118,29,10,2,0,2,1,0,0,0,0,0,0,0,0,0]},{"a":"W-2083-BLK","t":220,"w":[1,45,103,8,13,3,5,12,1,9,6,4,2,5,2,1,0,0]},{"a":"W-2078-BLK","t":211,"w":[0,102,96,3,1,2,0,2,0,2,1,0,1,0,0,1,0,0]},{"a":"W-15-BLK","t":205,"w":[0,44,93,9,12,7,7,8,7,6,1,2,6,0,2,1,0,0]},{"a":"W-2079-BLK","t":171,"w":[0,57,83,5,10,5,2,4,0,0,0,1,3,1,0,0,0,0]},{"a":"W-2047-BLACK","t":144,"w":[0,45,38,7,10,2,4,7,3,4,8,7,3,1,0,4,1,0]},{"a":"W-2010-BLACK","t":128,"w":[0,48,39,7,4,4,4,7,0,4,8,1,1,0,0,0,0,1]},{"a":"W-7-GREEN","t":125,"w":[0,9,51,21,16,10,5,1,0,2,2,3,2,1,1,1,0,0]},{"a":"W-8-BEIG","t":117,"w":[0,60,36,2,15,2,0,0,1,1,0,0,0,0,0,0,0,0]},{"a":"M-1159-GREY","t":107,"w":[0,19,36,5,5,3,1,1,5,6,6,9,4,3,1,3,0,0]},{"a":"W-2063-BLK","t":106,"w":[0,32,41,11,12,3,2,3,0,0,0,0,2,0,0,0,0,0]},{"a":"M-1145-BLK","t":101,"w":[0,15,52,8,6,1,4,4,2,0,5,1,2,0,1,0,0,0]},{"a":"M-1159-BLK","t":97,"w":[0,15,23,3,5,8,5,3,4,6,8,1,5,6,1,2,2,0]},{"a":"M-114-OLI","t":76,"w":[0,36,40,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"a":"W-2062-BLK","t":74,"w":[0,50,20,0,0,0,0,0,0,0,1,0,2,1,0,0,0,0]},{"a":"W-2055-BLK","t":72,"w":[0,6,6,2,3,8,11,8,4,7,3,2,9,0,0,2,1,0]},{"a":"W-13-BLACK","t":69,"w":[0,23,33,3,5,2,3,0,0,0,0,0,0,0,0,0,0,0]},{"a":"M-112-GREY","t":68,"w":[0,14,24,7,12,3,3,3,0,0,0,2,0,0,0,0,0,0]},{"a":"M-151-BLACK","t":65,"w":[0,6,5,1,4,6,3,6,2,1,28,0,0,0,1,2,0,0]},{"a":"B-3014-BLK","t":65,"w":[0,7,27,18,4,5,0,4,0,0,0,0,0,0,0,0,0,0]},{"a":"W-2062-BEIG","t":61,"w":[0,36,20,2,2,0,0,1,0,0,0,0,0,0,0,0,0,0]},{"a":"W-2055-BEIG","t":57,"w":[0,2,11,5,6,4,5,9,5,1,1,3,3,1,0,1,0,0]},{"a":"M-114-GREY","t":56,"w":[0,21,24,4,4,0,0,1,2,0,0,0,0,0,0,0,0,0]},{"a":"W-2118-BLK","t":47,"w":[0,6,36,4,1,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"a":"M-1145-GREY","t":44,"w":[0,13,23,2,2,1,0,3,0,0,0,0,0,0,0,0,0,0]},{"a":"M-144-GREEN","t":40,"w":[0,15,10,0,1,3,0,2,2,2,1,3,1,0,0,0,0,0]},{"a":"ODEN-BLK","t":39,"w":[0,17,22,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"a":"ODEN-BEIGE","t":38,"w":[0,14,19,4,1,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"a":"W-2043-BLACK","t":38,"w":[0,9,6,0,5,5,0,2,2,3,1,0,1,0,2,2,0,0]},{"a":"W-2010-GREEN","t":36,"w":[0,14,10,0,1,2,1,3,2,2,0,1,0,0,0,0,0,0]},{"a":"BELTER-BLK","t":35,"w":[0,10,21,3,1,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"a":"M-144-BLACK","t":34,"w":[0,14,6,1,2,1,0,1,2,0,1,3,3,0,0,0,0,0]},{"a":"M-131-BLK","t":33,"w":[0,10,15,1,2,3,0,0,0,0,0,0,1,1,0,0,0,0]},{"a":"W-13-BLK","t":33,"w":[0,9,5,1,5,3,3,0,0,0,0,2,2,1,0,0,1,1]},{"a":"M-1165-BLACK","t":32,"w":[0,4,14,2,1,2,2,3,0,0,1,2,0,0,0,1,0,0]},{"a":"M-1180-BLK","t":32,"w":[0,21,6,1,1,0,0,0,0,1,0,2,0,0,0,0,0,0]},{"a":"M-1157-BLK","t":31,"w":[1,10,12,0,3,0,0,0,0,2,0,2,0,0,0,0,1,0]},{"a":"W-2079-OFFW","t":30,"w":[0,7,7,4,2,1,0,4,0,1,4,0,0,0,0,0,0,0]},{"a":"MOCHI-B3001-BLK","t":29,"w":[0,3,15,4,0,2,3,2,0,0,0,0,0,0,0,0,0,0]},{"a":"W-41 BONE","t":29,"w":[0,0,3,3,1,0,2,2,1,0,1,5,4,4,2,1,0,0]}],"by_envio":{"labels":["Correo","Flex","Otro","Full"],"totals":[4803,3215,638,10],"by_week":{"Correo":[0,948,1778,356,455,241,150,200,72,107,109,107,99,56,36,51,35,3],"Flex":[0,798,1592,282,144,50,50,51,33,34,30,39,36,28,11,20,13,4],"Full":[0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,3,6,0],"Otro":[5,149,296,42,49,11,11,10,9,2,11,12,13,2,3,9,4,0]}},"by_pago":{"labels":["1 pago"],"totals":[8666],"by_week":{"1 pago":[5,1895,3666,680,648,302,211,261,114,143,150,158,148,87,50,83,58,7]}},"by_provincia":{"labels":["Buenos Aires","Capital Federal","Córdoba","","Santa Fe","Río Negro","Neuquén","Mendoza","Entre Ríos","Chubut"],"totals":[3458,1666,662,638,485,283,263,187,182,125]},"by_cantidad":{"labels":["1 artículo","2 artículos","3 artículos","4+"],"totals":[8577,54,9,26],"by_week":{"1 artículo":[5,1879,3649,666,640,300,211,259,114,143,122,156,148,87,50,83,58,7],"2 artículos":[0,16,14,14,0,2,0,2,0,0,4,2,0,0,0,0,0,0],"3 artículos":[0,0,3,0,3,0,0,0,0,0,3,0,0,0,0,0,0,0],"4+":[0,0,0,0,5,0,0,0,0,0,21,0,0,0,0,0,0,0]}},"by_publicidad":{"labels":["Con publicidad","Sin publicidad"],"totals":[0,8666],"by_week":{"Con publicidad":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Sin publicidad":[5,1895,3666,680,648,302,211,261,114,143,150,158,148,87,50,83,58,7]}},"top_publicaciones":[{"titulo":"Campera Parka Hombre Negra Impermeable Importada Capucha","unidades":606,"w":[0,263,320,10,6,0,0,2,2,0,0,1,1,0,0,0,1,0]},{"titulo":"Campera Hombre Puffer Inflada Vesubio Parka Supply","unidades":525,"w":[0,116,281,45,43,20,7,6,3,0,0,2,1,0,0,0,1,0]},{"titulo":"Campera Parka Harmony Black","unidades":501,"w":[1,200,230,9,56,5,0,0,0,0,0,0,0,0,0,0,0,0]},{"titulo":"Campera Puffer Holy Verde Mujer Nylon 5 Bolsillos Térmica","unidades":485,"w":[1,87,301,45,30,9,7,5,0,0,0,0,0,0,0,0,0,0]},{"titulo":"Campera Mujer Parka Croft Puffer Mujer Otoño/invierno Bone","unidades":458,"w":[0,1,202,40,47,40,28,30,16,13,11,9,7,5,4,3,2,0]},{"titulo":"Campera Mujer Inflable Importada Dama Capucha Ghost Puffers","unidades":452,"w":[0,0,62,152,158,50,20,6,0,0,0,3,0,1,0,0,0,0]},{"titulo":"Campera Mujer Puffers Aura Térmica Invierno Negra","unidades":218,"w":[0,0,143,22,21,14,9,3,1,1,2,2,0,0,0,0,0,0]},{"titulo":"Campera Puffers Aura Mujer Térmica Otoño/invierno","unidades":214,"w":[0,0,214,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"titulo":"Campera Parka Axis Hombre Nylon Impermeable Negro","unidades":184,"w":[0,47,125,9,3,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"titulo":"Campera Mujer Larga Inflada Importada Negra Puffers","unidades":168,"w":[1,42,92,7,8,2,3,4,0,2,1,1,0,3,1,1,0,0]}],"stock":{"4WAY-ARMY":27,"4WAY-BLACK":38,"4WAY-KHAKI":25,"4WAY-NAVY":1,"ACID-AQUA-VAN":672,"ACID-BORDO-VAN":630,"ACID-CAMEL-VAN":668,"ACID-CELESTE-VAN":770,"ACID-MILITAR-VAN":821,"ACID-NEGRO-VAN":885,"ACID-ROSA-VAN":627,"ADEL":4,"ALQ":6,"ARTPRUEBA":27,"B-3014-BLK":411,"B-3015-BLK":458,"BEJOGG-BLK":143,"BEJOGG-GRN":39,"BEJOGG-NAT":490,"BEJOGG-NVY":-3,"BEJOGG-WHI":177,"BELIN-BLK":168,"BELIN-NAT":477,"BELIN-NVY":13,"BELIN-WHI":345,"BELTER-BEI":381,"BELTER-BLK":411,"BER-CARG-BEIG-40":2,"BER-CARG-BEIG-42":1,"BER-CARG-BEIG-44":2,"BER-CARG-BEIG-46":2,"BER-CARG-BEIG-48":1,"BER-CARG-BEIG-50":2,"BER-CARG-FLC-40":3,"BER-CARG-FLC-42":7,"BER-CARG-FLC-44":2,"BER-CARG-FLC-46":3,"BER-CARG-FLC-48":5,"BER-CARG-FLC-50":3,"BER-CARG-NAV-40":4,"BER-CARG-NAV-42":2,"BER-CARG-NAV-44":2,"BER-CARG-NAV-46":1,"BER-CARG-NAV-48":3,"BER-CARG-NAV-50":2,"BER-CH-BLK-38":9,"BER-CH-BLK-40":5,"BER-CH-BLK-42":17,"BER-CH-BLK-44":7,"BER-CH-BLK-46":22,"BER-CH-BLK-48":6,"BER-CH-BLK-50":11,"BER-CH-BLUE-38":4,"BER-CH-BLUE-40":18,"BER-CH-BLUE-42":18,"BER-CH-BLUE-44":22,"BER-CH-BLUE-46":25,"BER-CH-BLUE-48":15,"BER-CH-BLUE-50":15,"BER-CH-GMP":30,"BER-CH-GREEN-38":5,"BER-CH-GREEN-40":7,"BER-CH-GREEN-42":21,"BER-CH-GREEN-44":8,"BER-CH-GREEN-46":10,"BER-CH-GREEN-48":9,"BER-CH-GREEN-50":14,"BER-CH-KHAKI-38":6,"BER-CH-KHAKI-40":15,"BER-CH-KHAKI-42":15,"BER-CH-KHAKI-44":10,"BER-CH-KHAKI-46":14,"BER-CH-KHAKI-48":11,"BER-CH-KHAKI-50":12,"BER-JOGCA-BGE-38":1,"BER-JOGCA-BGE-40":2,"BER-JOGCA-BGE-42":4,"BER-JOGCA-BGE-44":3,"BER-JOGCA-BGE-46":3,"BER-JOGCA-BGE-48":10,"BER-JOGCA-BGE-50":6,"BER-JOGCA-BLK-40":2,"BER-JOGCA-BLK-42":2,"BER-JOGCA-BLK-44":2,"BER-JOGCA-BLK-46":4,"BER-JOGCA-BLK-50":1,"BER-JOGCA-GRE-38":5,"BER-JOGCA-GRE-40":13,"BER-JOGCA-GRE-42":4,"BER-JOGCA-GRE-44":4,"BER-JOGCA-GRE-46":5,"BER-JOGCA-GRE-48":3,"BER-JOGCA-GRE-50":8,"BER-JOGCA-KHA-38":4,"BER-JOGCA-KHA-40":3,"BER-JOGCA-KHA-42":11,"BER-JOGCA-KHA-44":6,"BER-JOGCA-KHA-46":7,"BER-JOGCA-KHA-48":10,"BER-JOGCA-KHA-50":1,"BER-JOGG-BEIG-38":1,"BER-JOGG-BEIG-40":5,"BER-JOGG-BEIG-42":7,"BER-JOGG-BEIG-44":8,"BER-JOGG-BEIG-46":8,"BER-JOGG-BEIG-48":4,"BER-JOGG-BEIG-50":5,"BER-JOGG-BLK-38":3,"BER-JOGG-BLK-40":5,"BER-JOGG-BLK-42":8,"BER-JOGG-BLK-44":7,"BER-JOGG-BLK-46":9,"BER-JOGG-BLK-48":4,"BER-JOGG-BLK-50":5,"BER-JOGG-GREN-38":3,"BER-JOGG-GREN-40":4,"BER-JOGG-GREN-42":6,"BER-JOGG-GREN-44":5,"BER-JOGG-GREN-46":7,"BER-JOGG-GREN-48":5,"BER-JOGG-GREN-50":5,"BER-JOGG-KHAK-38":2,"BER-JOGG-KHAK-40":4,"BER-JOGG-KHAK-42":7,"BER-JOGG-KHAK-44":4,"BER-JOGG-KHAK-46":7,"BER-JOGG-KHAK-48":6,"BER-JOGG-KHAK-50":4,"BOLSO-B3003-BLK":766,"CA-ANON-BLK":664,"CA-ANON-ECR":160,"CA-AXE-BEIG":1,"CA-AXE-BLK":263,"CA-AXE-ECR":351,"CA-AXE-NAVY":194,"CA-BRID":10,"CA-FROD-BLK":11,"CA-FROD-ECR":23,"CA-GEN-BUD2":13,"CA-GEN-GREN":62,"CA-GEN-NAVY":69,"CA-JELLY":101,"CA-JOY-BLK":101,"CA-JOY-BLK-BUD2":2,"CA-JOY-ECR-MANK1":159,"CA-MOWG":3,"CA-RANG-MANK1":54,"CA-RANG-MANK2":59,"CA-SANO-BRW":6,"CA-SANO-ECR":16,"CA-SIMB-MANK1":50,"CA-SIMB-MANK2":88,"CA-STIT-BLK":30,"CAJA-3831":1656,"CAJA-3839":10,"CAJA-3951":1,"CAJA-4703":1,"CAJA-4706":1,"CAJA-4712":1,"CAJA-4713":1,"CAJA-4715":191,"CAJA-4725":1,"CAJA-4744":1,"CAJA-4752":5,"CAJA-4763":1,"CAJA-BERMJOGCIER":448,"CAJA-CAMP-DEPOR1":1,"CAJA-CAMP-DEPOR2":193,"CAJA-CAMP-DEPOR3":1,"CAJA-CAMP-DEPOR4":1,"CAJA-CAMP-DEPOR6":192,"CAJA-CAMPCOSTURA":1,"CAJA-CAMPFRIS":1,"CAJA-CHOMB-JERS1":1,"CAJA-CHOMB-JERS2":2,"CAJA-CHOMB-PIQ":1,"CAJA-CHOMB-PIQUE":20,"CAJA-CHOMBA-VIVO":2,"CAJA-CHOMJERSEY-":2,"CAJA-CHOMSPDX":2,"CAJA-PANT-DEPOR1":1,"CAJA-PANT-DEPOR2":193,"CAJA-PANT-DEPOR4":2,"CAJA-PANT-DEPOR6":192,"CAJA-PANTSPNDX":1,"CAJA-REMDEPORTIV":3,"CAJA-SHORT-DEPO1":1,"CAJA-SHORT-DEPO2":1,"CAJA-SHORT-DEPO3":97,"CAJA-SHORT-DEPO4":96,"CALIF.GREEN":5,"CALIF.NAVY":4,"CAMACO-NAT":-27,"CAMACO-NVY":-10,"CAMACO-WHI":-27,"CAMLINO-BLK":-68,"CAMLINO-GRN":-78,"CAMLINO-NAT":-93,"CAMLINO-NVY":-75,"CAMLINO-WHI":-99,"CH RECH":21,"CH-3019-AQUA":8,"CH-3019-BLK":18,"CH-3019-GREY":3,"CH-3019-NAV":7,"CH-3019-PINK":4,"CH-3019-RED":1,"CH-3019-WHI":21,"CH-3019L.BLU":2,"CH-AIR-GREY":78,"CH-CAY-BLK":529,"CH-CAY-ECR":7,"CH-CAY-GREY":230,"CH-CAY-NAVY":158,"CH-GLAN-BLK":145,"CH-GLAN-ECR":205,"CH-GLAN-NVY":300,"CH-HASH-BLK":1001,"CH-HASH-ECR":312,"CH-PEET-BLK":494,"CH-PEET-ECR":500,"CH-PEET-NVY":510,"CH-RON-BLK":86,"CH-RON-BLU":82,"CH-RON-ECR":84,"CH-RON-GRY":17,"CH-RON-NVY":18,"CH-SUN-BLK":37,"CH-SUN-ECR":113,"CLASLINE.RED":1,"CMAO-BLK":8,"CMAO-GRN":7,"CMAO-NAT":29,"CMAO-NVY":2,"CMAO-WHI":3,"CREWNECK-BLK":272,"DER-USO":1,"DESC- EFE":260,"DESC.MEDIDA":114,"DEV-CAMP":958,"DIF-PRECIO":81,"DIF-TC":23,"DIF-UNI":3,"FALLAS":424,"FALT-PREND":26,"FLANNELJ-BLK":267,"FLANNELJ-BRN":285,"FLANNELJ-GRN":329,"HOODIZIP-BLK":16,"M-104GRE":5,"M-105-BLACK":3,"M-105-NAVY":19,"M-107-BLACK":1,"M-107-GREEN":4,"M-108-BLACK":21,"M-108-GREEN":3,"M-109-BLACK":123,"M-109-GREEN":129,"M-109-NAV":48,"M-112-BLACK":132,"M-112-GREEN":171,"M-112-GREY":37,"M-112-NAVY":1,"M-113-BLACK":36,"M-113GREEN":14,"M-114-BLACK":3324,"M-114-GREEN":1,"M-114-GREY":1585,"M-114-GRN-BRIGAN":79,"M-114-OLI":308,"M-1145-BLK":2,"M-1145-GREY":122,"M-1154-BLACK":117,"M-1154-GREEN":85,"M-1155-BLACK":317,"M-1155-GREEN":21,"M-1157-BLK":53,"M-1157-OFFWH":117,"M-1158-BLACK":7,"M-1158-MILIT":2,"M-1158-OFFWH":27,"M-1159-BLK":86,"M-1159-GREY":88,"M-1161-BLACK":5,"M-1161-BLK-OLD":33,"M-1162-BLK":14,"M-1165-BEIGE":36,"M-1165-BLACK":12,"M-1165-MILIT":34,"M-1166-BLACK":239,"M-1171-BLACK":36,"M-1174-BEIGE":5,"M-1174-BLACK":1,"M-1174-MILIT":3,"M-1175-BLK":220,"M-1175-GREEN":253,"M-117B.VCP":1,"M-1180-BLK":302,"M-1181-BLK":12,"M-1182-BLK":323,"M-1183-BLK":12,"M-1183-OFFW":44,"M-1184-BLK":61,"M-1188-BLK":199,"M-1188-GREY":277,"M-1191-BLK":366,"M-1191-GRN":472,"M-1194-BLK":284,"M-1195-BLK":428,"M-1197-BLK":401,"M-130-BLK":6,"M-130-BLUE":29,"M-130-GREY":23,"M-131-BEIGE":6,"M-131-BLK":92,"M-131-BROWN":75,"M-131-GREEN":141,"M-131-GREY":6,"M-131-NAVY":3,"M-131-PETROL":1,"M-132-BLK":7,"M-132-MGREEN":31,"M-132-NAVY":42,"M-133-BLK":54,"M-133-BLUE":135,"M-133-GREEN":3,"M-133-MLITAR":83,"M-134-BLK":100,"M-134-MGREEN":109,"M-134-NAVY":70,"M-135-BLK":7,"M-135-MGREEN":12,"M-138-BEIG":46,"M-138-MGREEN":27,"M-139-GREEN":1,"M-140-BLACK":63,"M-140-BLUE":249,"M-140-BROWN":11,"M-140-GREEN":475,"M-141-BLACK":163,"M-141-M.GREN":31,"M-141-NAVY":280,"M-142-BEIGE":22,"M-142-BLACK":28,"M-142-M.GREN":72,"M-143-BLACK":33,"M-143-BLUE":57,"M-143-GREEN":25,"M-144-BLACK":785,"M-144-GREEN":494,"M-144-NAVY":168,"M-148-BLACK":403,"M-148-GREY":99,"M-150-MLTARY":45,"M-151-BLACK":306,"M-151-NAVY":70,"M-152-BLACK":1,"M-152-RED":28,"M-1ORG.VCP":1,"M-1YEW.VCP":1,"M-2BLK.VCP":1,"M-2KHK.VCP":1,"M-2MG.VCP":1,"M-30-BLACK":25,"M-30-GREEN":11,"M-30-KHAKI":82,"M-36GN-BLACK":0,"M-4-BLACK":5,"M-4-YELLOW":6,"M-6-BLACK":8,"M-6-BLK/BLUE":12,"M-6-BLK/GREE":8,"M-60BLK":2,"M-60OLV":4,"M-61BLK":3,"M-61OLV":1,"M-65BLK":1,"M-65GRY":1,"M-69-BLK":3,"M-6TRI.VCP":1,"M-7-BLK":24,"M-7-DKGREY":8,"M-7-GREEN":9,"M-70-BLACK":-2,"M-70-NAVY":11,"M-71-BLACK":26,"M-71-GREEN":15,"M-71-NAVY":197,"M-72-BLACK":7,"M-72-M.GREEN":5,"M-74-BLK":22,"M-74-FOR.GREEN":12,"M-74-GREEN":86,"M-74-GREY":29,"M-74-NAVY":77,"M-74-OFFWHIT":7,"M-74BLK":14,"M-78-BLACK":6,"M-78-M.GREEN":9,"M-7BLK.VCP":1,"M-8-GREEN":3,"M-84BLK":3,"M-84MG":5,"M-87-BLACK":18,"M-87-BLACKONA-":19,"M-88-BLACK":30,"M-94COF":8,"M-94KHA":10,"M-94NAV":11,"M-97BLA":10,"M-97NAV":2,"M-98BLA":9,"M-98NAV":12,"MAVERICK.BLU":1,"MAVERICK.RED":8,"MER-FLEX":2,"MICRO1-BEIG":22,"MICRO1-BLK":-57,"MICRO1-NAVY":57,"MICRO1-WHIT":54,"MICRO2-BLK":6,"MICRO2-NAVY":8,"MICRO2-NVY-TRIB2":2,"MICRO2-WHIT":6,"MICRO3-BLK":56,"MICRO3-GREY":128,"MICRO3-WHI":143,"MICRO4-BLK":30,"MICRO4-GRY":66,"MICRO4-WHI":8,"MJBENTON-BLK":202,"MJCRICH-BEI":152,"MJCRICH-BLK":80,"MOCHI-B3001-BLK":1996,"MOCHI-B3002-BEIG":156,"MOCHI-B3002-BLK":244,"MOCHI-B3002-WHIT":195,"MPA24010-BLK":139,"MPA24010-MIL":58,"MT-1002-BLK":18,"MT-1002-NAV":43,"MT-1003-BRN":26,"MT-1003-GRY":-14,"MT-1003-OFF":-2,"MT-1004-BLK":-25,"MT-1006-BEI":-30,"MT-1006-BLK":-7,"MT-1006-GRY":-48,"MT-1006-NAV":-6,"MT-1006-SKY":-20,"MT-1008-GRY":-186,"MT-1009-BLK":100,"MT-1009-BRN":69,"MT-1009-CHO":11,"MT-1009-LGRY":34,"MT-1011-BEI":-7,"MT-1011-CHA":-11,"MT-1011-GRY":5,"MT-1012-BEI":-206,"MT-1012-BRN":-26,"MT-1012-CHA":-62,"MT-1013-GRY":-46,"MT-1013-NAV":-12,"MT-1013-OFF":8,"MT-1014-BLK":-78,"MT-1014-OLI":-84,"MT-1015-BLK":131,"MT-1015-DKG":141,"MT-1015-OFF":104,"MT-1015-OLI":112,"MT-1015-SKY":50,"MT-1016-BLK":240,"MT-1016-WHI":251,"MT-1017-OFF":120,"MT-1017-OLI":186,"MT-1018-BEI":124,"MT-1018-BLK":145,"MT-1018-CHA":143,"MT-1018-WHI":109,"MT-1019-BLK":108,"MT-1019-NAV":44,"MT-1019-WHI":21,"MT-1020-BLK":162,"MT-1020-KHA":120,"MT-1020-NVY":96,"MT-1020-WHI":130,"MT-1021-BEI":180,"MT-1021-CHG":188,"MT-1021-NAV":171,"MT-1021-WHI":144,"MT-1022-BLK":189,"MT-1022-COF":105,"MT-1022-GRY":72,"MT-1022-NAV":83,"MT-1022-OLI":39,"MT-1024-BEI":116,"MT-1024-BLK":175,"MT-1024-GRY":139,"MT-1024-NAV":143,"MT-1025-BLK":297,"MT-1025-GRY":86,"MT-1025-NAV":260,"MT-1026-BLK":194,"MT-1026-NAV":215,"MT-1026-OFF":121,"MT-1027-BLK":154,"MT-1027-MGR":167,"MT-1027-RED":168,"MT-1028-BEI":129,"MT-1028-BLK":168,"MT-1028-GRY":107,"MT-1028-NAV":155,"NASSAU-BLK":5,"NASSAU-BLUE":1,"NASSAU-RED":3,"NC":25,"NC-FC25":1,"OCEAN.GREEN":8,"ODEN-BEIGE":706,"ODEN-BLK":353,"ODEN-NAVY":452,"ORIGCREW-BLK":201,"ORIGHOOD-BLK":266,"ORIGHOOD-GRY":350,"OVEFITNO-BLK":96,"OVEFITNO-OLI":128,"PACHI-BLK":-96,"PACHI-NAT":311,"PACHI-WHI":206,"PAGO-ADEL":8,"PAJOG-BLK":124,"PAJOG-BUD4":2,"PAJOG-GRN":31,"PAJOG-NATU":63,"PAJOG-NVY":40,"PAJOG-WHI":176,"PAN-JOGCA-BGE-38":2,"PAN-JOGCA-BGE-40":4,"PAN-JOGCA-BGE-42":3,"PAN-JOGCA-BGE-44":3,"PAN-JOGCA-BGE-46":4,"PAN-JOGCA-BGE-48":5,"PAN-JOGCA-BGE-50":4,"PAN-JOGCA-BLK-38":2,"PAN-JOGCA-BLK-40":3,"PAN-JOGCA-BLK-42":3,"PAN-JOGCA-BLK-44":1,"PAN-JOGCA-BLK-46":2,"PAN-JOGCA-BLK-48":2,"PAN-JOGCA-BLK-50":4,"PAN-JOGCA-GRN-38":2,"PAN-JOGCA-GRN-40":3,"PAN-JOGCA-GRN-42":4,"PAN-JOGCA-GRN-44":5,"PAN-JOGCA-GRN-46":4,"PAN-JOGCA-GRN-48":3,"PAN-JOGCA-GRN-50":2,"PAN-JOGCA-KHA-38":2,"PAN-JOGCA-KHA-40":2,"PAN-JOGCA-KHA-42":1,"PAN-JOGCA-KHA-44":2,"PAN-JOGCA-KHA-46":3,"PAN-JOGCA-KHA-48":3,"PAN-JOGCA-KHA-50":1,"PAN-JOGGR-BGE-38":2,"PAN-JOGGR-BGE-40":2,"PAN-JOGGR-BGE-42":6,"PAN-JOGGR-BGE-44":3,"PAN-JOGGR-BGE-46":5,"PAN-JOGGR-BGE-48":2,"PAN-JOGGR-BGE-50":3,"PAN-JOGGR-BLK-38":2,"PAN-JOGGR-BLK-40":3,"PAN-JOGGR-BLK-42":5,"PAN-JOGGR-BLK-44":3,"PAN-JOGGR-BLK-46":5,"PAN-JOGGR-BLK-48":3,"PAN-JOGGR-BLK-50":1,"PAN-JOGGR-GRN-40":4,"PAN-JOGGR-GRN-42":3,"PAN-JOGGR-GRN-44":1,"PAN-JOGGR-GRN-46":7,"PAN-JOGGR-GRN-48":2,"PAN-JOGGR-GRN-50":3,"PAN-JOGGR-KHA-38":3,"PAN-JOGGR-KHA-40":2,"PAN-JOGGR-KHA-42":3,"PAN-JOGGR-KHA-44":2,"PAN-JOGGR-KHA-46":5,"PAN-JOGGR-KHA-48":2,"PAN-JOGGR-KHA-50":4,"PANT.CH.VI.-BLK-":8,"PANT.CH.VI.-GRE-":8,"PANT.CH.VI.-KHK-":1,"PANT.CH.VI.-NVY-":6,"PANT.CHIN-BLK-46":-5,"PANT.CHIN-BLU-38":2,"PANT.CHIN-BLU-40":2,"PANT.CHIN-BLU-42":4,"PANT.CHIN-BLU-44":4,"PANT.CHIN-BLU-46":1,"PANT.CHIN-BLU-48":2,"PANT.CHIN-BLU-50":1,"PANT.CHIN-KHA-44":1,"PANT.CHIN-KHA-48":1,"POLKADOT.BLU":9,"PUFCOMBI-BLK":482,"PUFCOMBI-GRY":320,"PUFCOMBI-NVY":314,"PUFFERSH-BEI":292,"PUFFERSH-BLK":316,"PUFFERSH-GRN":100,"PULOVHOO-BLK":416,"RAINFORE.BLK":11,"REFITNOR-BLK":-32,"REFITSOL-BLK":112,"REFITSOL-WHI":144,"REM.LIS.L.BL":31,"REM.LIS.LPIN":13,"REM.LIS.ORAN":9,"REM.LISA.AZU":72,"REM.LISA.BLK":23,"REM.LISA.GRY":58,"REM.LISA.NAV":41,"REM.LISA.RED":58,"REM.LISA.WHI":41,"SAINT.TROPEZ":2,"SCORP.BEACH":5,"SHERPAHO-BLK":92,"SOLID.BLACK":1,"SPNDX-BLACK":-29,"SPNDX-BLK":1666,"SPNDX-BLU634":-86,"SPNDX-BLUE":1,"SPNDX-GREEN":3,"SPNDX-GRN229":40,"SPNDX-GRN289":727,"SPNDX-KHA635":-46,"SPNDX-KHAKI":1,"SPNDX-NAVY":0,"SPNDX-PINK":7,"SPNDX-RED29":26,"SPNDX-WINE":303,"SPNDX-YELLOW":10,"SPOTLIG.BLUE":1,"SURF-BLK":224,"SURF-BLU634":375,"SURF-GRN289":96,"SURF-KHA635":226,"SURF-RED29":103,"SURFIN.TRIP":1,"TB-ANCHORS":1,"TB-ARUBARED":11,"TB-BAHIA.BLK":1,"TB-BAHIA.NAV":3,"TB-BATIK.BDX":2,"TB-BATIK.BLU":5,"TB-BLUEBEACH":693,"TB-BRICK.BLK":1,"TB-BRICK.BLU":1,"TB-COCONUT.W":3,"TB-COZUMEL":340,"TB-DEEPSEA":2,"TB-DEGRARED":1,"TB-EXUMA":16,"TB-GRANDCAIM":105,"TB-LACIGALE":159,"TB-MIL.GREEN":1,"TB-PALMBEACH":1,"TB-PINKLEMON":4,"TB-SAILOR":3,"TB-TRUNKSBAY":2,"TDB-ACAPAZUL-VAN":668,"TDB-ACAPCELE-VAN":662,"TDB-ACAPNEGR-VAN":826,"TDB-ACAPRETR-VAN":491,"TDB-ACAPROSA-VAN":633,"TDB-ACAPVERD-VAN":582,"TDB-AVALON":712,"TDB-BAKU":231,"TDB-BELFAST":597,"TDB-BERLIN":118,"TDB-BONANZA-VAN":465,"TDB-BREMEN":324,"TDB-BRUSELAS":27,"TDB-CHILLOUT":1,"TDB-CITRIC":1013,"TDB-CURRENTS":2,"TDB-DERBY":397,"TDB-DORTMUND":283,"TDB-DUBLIN":1022,"TDB-ESSEN":10,"TDB-ESTAMBUL":61,"TDB-FEATHERS":874,"TDB-FREEPORT":2,"TDB-GIJON":1121,"TDB-HIBISCUS":2,"TDB-IPANEMA-VAN":471,"TDB-LAGUN-VAN":486,"TDB-LEEDS":-82,"TDB-LEM.HAZE":212,"TDB-LINZ":444,"TDB-LISBOA":1073,"TDB-LIVERPOL":30,"TDB-LODZ":93,"TDB-NAVAGIO-VAN":473,"TDB-ODESA":94,"TDB-OPORTO":161,"TDB-OSLO":615,"TDB-OXFORD":0,"TDB-PARMA":8,"TDB-PIÑACOLA":4,"TDB-PRAGA":9,"TDB-RECIFE-VAN":461,"TDB-REPTILE":4,"TDB-SANBLAS-VAN":474,"TDB-SARAJEVO":1089,"TDB-SPLIT":783,"TDB-SUNRISE":2,"TDB-TURIN":72,"TDB-VERONA":673,"TDB-VIENA":633,"TDB-VIGO":404,"TEL-CEL":2,"VER18-VERANO18":0,"VER20-VERANO20":0,"VER21-VERANO 2021":0,"VER22-VERANO 2022":0,"VER23-VERANO 2023":0,"VER24-VERANO 2024":0,"VER25-VERANO 2025":0,"VER26-VERANO 2026":0,"VER27-VERANO 2027":0,"W-1 BLACK":2,"W-10-BLK":9,"W-10-GREY":34,"W-12-L.BLUE":8,"W-12-ORAN":17,"W-13-BLK":1094,"W-13-PINK":1,"W-14-BROWN":18,"W-15-BLK":141,"W-15-GREEN":8,"W-15-ORANG":48,"W-18-BLK":90,"W-19-BLK":5,"W-19-WHIT":3,"W-2003-BLACK":11,"W-2003-BLAK-KO":160,"W-2003-BLK-OSSIR":99,"W-2010-BEIGE":6,"W-2010-BLACK":33,"W-2010-GREEN":80,"W-2032-BLACK":137,"W-2033-BLACK":1,"W-2033-GREEN":12,"W-2038-BEIGE":397,"W-2038-BLACK":878,"W-2042-BLACK":5,"W-2043-BLACK":88,"W-2045-BLACK":5,"W-2047-BLACK":255,"W-2047-GREY":112,"W-2049-BLACK":-67,"W-2052-BLACK":22,"W-2052-MILITA":23,"W-2055-BEIG":314,"W-2055-BLK":276,"W-2057-BLK":503,"W-2059-DKGRY":279,"W-2059-OFF":287,"W-2062-BEIG":14,"W-2063-BLK":652,"W-2066-BLK":103,"W-2067-BLK":186,"W-2067-RED":140,"W-2068-BLK":75,"W-2068-OFFW":69,"W-2070-BLK":316,"W-2070-MON":274,"W-2076-BLK":284,"W-2076-GREEN":177,"W-2077-BLK":209,"W-2077-GREEN":137,"W-2078-BLK":30,"W-2079-BLK":203,"W-2079-OFFW":128,"W-2083-BLK":111,"W-2094-BLK":407,"W-2101-BLK":374,"W-2114-BLK":185,"W-2114-GRY":171,"W-2118-BLK":333,"W-2118-GRN":271,"W-24-BLK":14,"W-24-BROWN":65,"W-25-BLK":12,"W-25-PURPL":70,"W-25-TERRAC":2,"W-29-BEIGE":12,"W-29-BLACK":1,"W-29-LGREEN":82,"W-3 BLACK":59,"W-4 PINK":2,"W-4 SPA BLUE":1,"W-41 BLACK":283,"W-41 BONE":0,"W-41 S.DOLLAR":2,"W-5-BLACK":1,"W-5-BLUE":24,"W-5-GREEN":12,"W-5-PINK":8,"W-6-BLK":82,"W-6-BONE":17,"W-6-TERR":52,"W-7-ALMOND":5,"W-7-BLK":1007,"W-7-GREEN":263,"W-7-PINK-MANCHA":17,"W-7-WHITE":12,"W-7-WHITE-MANCHA":57,"W-8-BEIG":547,"W-8-BLK":483,"W-8-CHOCOLAT":2,"W-9-VIOL":3,"W3KX-BLACK":99,"W3KX-BRWN":81,"WASHED-AQUA":2,"WASHED-BLACK":-2,"WASHED-BLK12":266,"WASHED-BLU1":66,"WASHED-BLUE":5,"WASHED-BORDX":2,"WASHED-BROWN":17,"WASHED-DEEP":81,"WASHED-GREEN":100,"WASHED-GREN6":735,"WASHED-GREN7":818,"WASHED-GREY":24,"WASHED-GRY11":455,"WASHED-GRY3":767,"WASHED-JADE":2,"WASHED-KHA23":-89,"WASHED-KHAKI":24,"WASHED-OBSID":18,"WASHED-RED":102,"WASHED-ROSE":7,"WASHED-VIO410":-28,"WASHED-VIO410-XX":55,"WORKJAC2-BLK":389,"WORKJAC2-GRN":332,"WT-771-BEIGE":1,"ZIGZALI-BLU":6,"ZIGZALI-GRN":10}}</script>
+<!-- Datos embebidos para compartir el archivo con historial de semanas -->
+<script type="application/json" id="vml-embedded-data"></script>
+</body>
+</html>
