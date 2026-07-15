@@ -719,3 +719,8 @@ tbody tr:hover{background:var(--surface2)}
 .cv-param-input-wrap{display:flex;align-items:center;gap:6px}
 .cv-param-input{background:transparent;color:#fff;font-size:22px;font-family:monospace;font-weight:900;border:none;outline:none;width:80px}
 .cv-param-unit{color:#475569;font-weight:800;font-size:16px}
+
+/* \u2500\u2500 Subtabs de navegaci\u00f3n agrupada \u2500\u2500 */
+.subtabs{display:flex;gap:2px;background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px;flex-shrink:0;overflow-x:auto}
+.main .sec.active{flex:1;min-height:0;height:auto}
+@media(max-width:768px){.subtabs{padding:0 8px}.subtabs .otab{padding:10px 12px;font-size:12px;white-space:nowrap}}
