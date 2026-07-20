@@ -45,7 +45,12 @@ function parseTNFile(file){
       }
 
       var headers = parseCSVLine(lines[0]);
-      function ci(name){ return headers.findIndex(function(h){ return h.toLowerCase().includes(name.toLowerCase()); }); }
+      function ci(name){
+        var nl = name.toLowerCase();
+        var exact = headers.findIndex(function(h){ return h.toLowerCase()===nl; });
+        if(exact>=0) return exact;
+        return headers.findIndex(function(h){ return h.toLowerCase().includes(nl); });
+      }
 
       var cId    = ci('Número de orden');
       var cFecha = ci('Fecha');
@@ -109,7 +114,12 @@ function parseTNFile(file){
     }catch(err){ toast('Error: '+err.message,'error'); console.error(err); }
     ld.style.display='none';
   };
-  rd.readAsText(file, 'latin-1');
+  rd.onerror = function(){ toast('No se pudo leer el archivo','error'); ld.style.display='none'; };
+  // 'iso-8859-1' es la etiqueta de encoding reconocida por los navegadores (WHATWG Encoding
+  // Standard); 'latin-1' NO está en la lista de labels válidos y hace que el navegador ignore
+  // el encoding pedido y decodifique como UTF-8 -> tildes rotas en los headers (Número, envío, etc.)
+  // y falla el matcheo de columnas.
+  rd.readAsText(file, 'iso-8859-1');
 }
 
 export { onTNDrop, onTNInput, parseTNFile }

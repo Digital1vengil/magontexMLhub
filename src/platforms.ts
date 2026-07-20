@@ -348,7 +348,7 @@ function tnMergeWithML(){
   if(added > 0){
     refreshHeaders();
     document.getElementById('xl-upload-state') && (document.getElementById('xl-upload-state').style.display='none');
-    document.getElementById('xl-result-state').style.display='flex';
+    var rs=document.getElementById('xl-result-state'); if(rs) rs.style.display='flex';
     renderPlatTable();
   }
 }
