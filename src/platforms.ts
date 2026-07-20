@@ -100,11 +100,10 @@ async function processXLFiles(files){
   const ld = document.getElementById('xl-load');
   ld.style.display='flex';
 
-  // Clear previous excel imports
-  S.platOrders = S.platOrders.filter(o => !(o.platform==='ml' && o.source==='excel'));
-  S.xlImported = [];
-
-  // Show file list
+  // NOTA: ya NO se pisa S.xlImported/S.platOrders acá — los archivos de ML se ACUMULAN
+  // (igual que Tienda Nube) para poder combinar varias cargas a lo largo del día. El dedup
+  // es global por orderId (ver abajo), así que volver a soltar el mismo archivo no duplica.
+  // Mostrar progreso de lectura de este batch (se pisa al final con el resumen completo)
   const listEl = document.getElementById('xl-files-list');
   listEl.style.display='flex';
   listEl.innerHTML = files.map(f=>`
@@ -114,8 +113,9 @@ async function processXLFiles(files){
       <span id="file-status-${f.name.replace(/[^a-z0-9]/gi,'_')}" style="color:var(--text-muted)">Pendiente...</span>
     </div>`).join('');
 
-  let allOrders = [];
+  let newOrdersAll = [];
   let totalDups = 0;
+  const existingIds = new Set(S.xlImported.map(o=>o.orderId));
 
   for(const file of files){
     const statusId = 'file-status-'+file.name.replace(/[^a-z0-9]/gi,'_');
@@ -125,12 +125,13 @@ async function processXLFiles(files){
 
     try{
       const orders = await parseXLFile(file);
-      // Dedup by orderId -- skip if already loaded from another file
-      const existingIds = new Set(allOrders.map(o=>o.orderId));
+      // Dedup GLOBAL por orderId -- contra lo ya cargado (de este archivo, de otros archivos
+      // de este mismo batch, y de cargas anteriores/Tienda Nube ya combinadas).
       const newOrders = orders.filter(o=>!existingIds.has(o.orderId));
+      newOrders.forEach(o=>existingIds.add(o.orderId));
       const dups = orders.length - newOrders.length;
       totalDups += dups;
-      allOrders.push(...newOrders);
+      newOrdersAll.push(...newOrders);
       if(statusEl) statusEl.textContent = `OK ${newOrders.length} órdenes${dups?` (+${dups} dup.)`:''}`;
       if(statusEl) statusEl.style.color = 'var(--green)';
     }catch(e){
@@ -139,26 +140,14 @@ async function processXLFiles(files){
     }
   }
 
-  if(!allOrders.length){ ld.style.display='none'; return; }
+  if(!newOrdersAll.length){ ld.style.display='none'; renderCombinedOrders(); return; }
 
-  S.platOrders.push(...allOrders);
-  S.xlImported = allOrders;
-  S.xlFiltered = [...allOrders];
-  renderXLTable();
-
-  // Switch to result state
-  document.getElementById('xl-upload-state') && (document.getElementById('xl-upload-state').style.display='none');
-  document.getElementById('xl-result-state').style.display  = 'flex';
-  document.getElementById('xl-result-title').textContent = `${allOrders.length} órdenes importadas`;
-  document.getElementById('xl-result-sub').textContent   = files.length===1 ? files[0].name : `${files.length} archivos combinados`;
-  // Badge en card ML
-  var mlBadge = document.getElementById('ml-badge');
-  var mlInfo  = document.getElementById('ml-loaded-info');
-  if(mlBadge){ mlBadge.style.display=''; mlBadge.textContent=allOrders.length+' órdenes'; }
-  if(mlInfo) { mlInfo.style.display=''; mlInfo.textContent='✓ '+allOrders.length+' órdenes de ML cargadas'; }
+  S.platOrders.push(...newOrdersAll);
+  S.xlImported.push(...newOrdersAll);
+  renderCombinedOrders();
 
   refreshHeaders(); filterHist(); window.renderDespachos?.();
-  const msg = totalDups ? `${allOrders.length} órdenes únicas (${totalDups} duplicados omitidos)` : `${allOrders.length} órdenes importadas correctamente`;
+  const msg = totalDups ? `${newOrdersAll.length} órdenes únicas (${totalDups} duplicados omitidos)` : `${newOrdersAll.length} órdenes importadas correctamente`;
   toast(msg, 'success');
   ld.style.display='none';
 }
@@ -335,6 +324,90 @@ function renderXLTable(){
 }
 
 /* ═══════════════════════════════════════════════════════
+   ARCHIVOS CARGADOS — resumen combinado ML+TN + eliminar por archivo
+   Cada orden en S.xlImported lleva platform + sourceFile (ML: nombre del
+   .xlsx; TN: nombre del .csv). Estas funciones agrupan por archivo, muestran
+   un listado con botón 🗑 por archivo, y recalculan todo (tabla, contadores,
+   badges) al agregar o quitar un archivo — sin importar el orden de carga.
+═══════════════════════════════════════════════════════ */
+
+function fileKeyOf(o){
+  return (o.platform||'ml') + '||' + (o.sourceFile || (o.platform==='tn' ? 'Tienda Nube' : 'Sin nombre'));
+}
+
+function renderFilesList(){
+  var listEl = document.getElementById('xl-files-list');
+  if(!listEl) return;
+  var byFile = {};
+  S.xlImported.forEach(function(o){
+    var key = fileKeyOf(o);
+    if(!byFile[key]) byFile[key] = { platform:o.platform||'ml', name:o.sourceFile || (o.platform==='tn'?'Tienda Nube':'—'), orders:new Set(), qty:0 };
+    byFile[key].orders.add(o.orderId);
+    byFile[key].qty += o.qty||0;
+  });
+  var keys = Object.keys(byFile);
+  if(!keys.length){ listEl.innerHTML=''; listEl.style.display='none'; return; }
+  listEl.style.display='flex';
+  listEl.innerHTML = keys.map(function(key){
+    var f = byFile[key];
+    var icon = f.platform==='tn' ? '🛍️' : '📊';
+    var safeName = String(f.name).replace(/'/g,"\\'");
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px">'
+      + '<span>'+icon+'</span>'
+      + '<span style="flex:1;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+f.name+'">'+f.name+'</span>'
+      + '<span style="color:var(--green);font-weight:600;white-space:nowrap">'+f.orders.size+' órd. · '+f.qty+' uds</span>'
+      + '<button onclick="removeSourceFile(\''+f.platform+'\',\''+safeName+'\')" title="Quitar este archivo (resta sus órdenes)" style="background:none;border:none;cursor:pointer;color:var(--red,#dc2626);font-size:14px;padding:2px 4px;line-height:1">🗑</button>'
+      + '</div>';
+  }).join('');
+}
+
+function renderCombinedOrders(){
+  renderFilesList();
+  var searchEl = document.getElementById('xl-search');
+  filterXL(searchEl ? searchEl.value : '');
+  refreshHeaders();
+
+  var hasAny = S.xlImported.length > 0;
+  var rs = document.getElementById('xl-result-state'); if(rs) rs.style.display = hasAny ? 'flex' : 'none';
+
+  var mlOrders = S.xlImported.filter(function(o){return (o.platform||'ml')==='ml';});
+  var tnOrders = S.xlImported.filter(function(o){return o.platform==='tn';});
+  var mlUnits  = mlOrders.reduce(function(s,o){return s+(o.qty||0);},0);
+  var tnUnits  = tnOrders.reduce(function(s,o){return s+(o.qty||0);},0);
+
+  var mlBadge = document.getElementById('ml-badge'), mlInfo = document.getElementById('ml-loaded-info');
+  if(mlBadge){ mlBadge.style.display = mlOrders.length ? '' : 'none'; mlBadge.textContent = mlOrders.length+' órdenes'; }
+  if(mlInfo) { mlInfo.style.display  = mlOrders.length ? '' : 'none'; mlInfo.textContent  = '✓ '+mlOrders.length+' órdenes de ML · '+mlUnits+' uds cargadas'; }
+
+  var tnBadge = document.getElementById('tn-badge'), tnInfo = document.getElementById('tn-loaded-info');
+  if(tnBadge){ tnBadge.style.display = tnOrders.length ? '' : 'none'; tnBadge.textContent = tnOrders.length+' órdenes'; }
+  if(tnInfo) { tnInfo.style.display  = tnOrders.length ? '' : 'none'; tnInfo.textContent  = '✓ '+tnOrders.length+' órdenes · '+tnUnits+' uds cargadas — ahora podés verlas en la tabla unificada'; }
+
+  var title = document.getElementById('xl-result-title');
+  var sub   = document.getElementById('xl-result-sub');
+  if(title) title.textContent = S.xlImported.length + ' órdenes combinadas';
+  if(sub){
+    if(mlOrders.length && tnOrders.length) sub.textContent = 'ML: '+mlOrders.length+' órdenes · TN: '+tnOrders.length+' órdenes';
+    else if(tnOrders.length) sub.textContent = 'Tienda Nube: '+tnOrders.length+' órdenes';
+    else if(mlOrders.length) sub.textContent = 'Mercado Libre: '+mlOrders.length+' órdenes';
+    else sub.textContent = '';
+  }
+}
+
+function removeSourceFile(platform, name){
+  var before = S.xlImported.length;
+  S.xlImported = S.xlImported.filter(function(o){ return fileKeyOf(o) !== (platform+'||'+name); });
+  var removed = before - S.xlImported.length;
+  if(removed === 0) return;
+  if(platform==='ml'){
+    S.platOrders = S.platOrders.filter(function(o){ return !(o.platform==='ml' && o.source==='excel' && o.sourceFile===name); });
+  }
+  renderCombinedOrders();
+  filterHist(); window.renderDespachos?.();
+  toast(removed+' orden'+(removed===1?'':'es')+' de "'+name+'" removida'+(removed===1?'':'s'), 'info');
+}
+
+/* ═══════════════════════════════════════════════════════
    TIENDA NUBE — importar CSV y fusionar con ML
 ═══════════════════════════════════════════════════════ */
 
@@ -346,15 +419,11 @@ function tnMergeWithML(){
     if(!existing.has(o.orderId)){ S.xlImported.push(o); added++; }
   });
   if(added > 0){
-    refreshHeaders();
-    document.getElementById('xl-upload-state') && (document.getElementById('xl-upload-state').style.display='none');
-    var rs=document.getElementById('xl-result-state'); if(rs) rs.style.display='flex';
     renderPlatTable();
-    // Refrescar también la tabla unificada de "Cargar órdenes" (S.xlFiltered), que es la que lee
-    // exportXLImportado() para el reporte. Sin esto, el Excel generado no incluía las órdenes de TN
-    // recién fusionadas hasta que el usuario tocaba el buscador manualmente.
-    var searchEl = document.getElementById('xl-search');
-    filterXL(searchEl ? searchEl.value : '');
+    // renderCombinedOrders() refresca la tabla unificada de "Cargar órdenes" (S.xlFiltered,
+    // que es la que lee exportXLImportado() para el reporte), los badges ML/TN y el listado
+    // de archivos con su botón de eliminar — todo en un solo lugar.
+    renderCombinedOrders();
   }
 }
 
@@ -378,3 +447,4 @@ try{window.exportPlatXL=exportPlatXL;}catch(e){}
 try{window.onXLDrop=onXLDrop;}catch(e){}
 try{window.onXLInput=onXLInput;}catch(e){}
 try{window.filterXL=filterXL;}catch(e){}
+try{window.removeSourceFile=removeSourceFile;}catch(e){}

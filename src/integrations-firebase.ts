@@ -115,7 +115,8 @@ function parseTNFile(file){
           date: dateISO+'T12:00:00',
           sku: sku, qty: qty, product: titulo||sku, variant: tnVariant(sku,titulo),
           status: status, total: total, canal:'Tienda Nube',
-          carrier: carrier, buyer: buyer, envio: envio
+          carrier: carrier, buyer: buyer, envio: envio,
+          source:'csv', sourceFile: file.name
         });
       }
 
