@@ -20,26 +20,54 @@ async function gdSaveManualToDrive(){
   await gdUploadFile(blob, fname, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
 
+// Fin de día: sube el reporte de "Cargar órdenes" a Drive SEPARADO por transportista —
+// las órdenes Flex a la carpeta Flex y el resto (Colecta/Correo/Punto) a la carpeta Colecta,
+// cada una en la subcarpeta del día de hoy. Antes esto subía TODO a una única carpeta genérica
+// (S.GD.folderId), que quedó apuntando a la carpeta de Flex — por eso los despachos de Colecta
+// también terminaban ahí.
+function _ordersSheet(orders){
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet([
+    ['N. Orden','Fecha','SKU','Producto','Cantidad','Canal','Estado','Carrier'],
+    ...orders.map(function(o){
+      return [o.orderId, new Date(o.date).toLocaleDateString('es-AR'), o.sku, o.product||'', o.qty, o.canal||'ML', o.status, o.carrier||''];
+    })
+  ]);
+  ws['!cols'] = [14,12,20,36,8,14,12,12].map(function(w){return{wch:w};});
+  XLSX.utils.book_append_sheet(wb, ws, 'Ordenes');
+  return wb;
+}
+
 async function gdSaveOrdersToDrive(){
   if(!S.xlImported.length){ toast('No hay órdenes para subir','error'); return; }
   if(!S.GD.token){ toast('Conectate a Google Drive primero','error'); return; }
   var btn = document.getElementById('btn-save-drive-orders');
   if(btn){ btn.textContent='⏳ Subiendo...'; btn.disabled=true; }
   try{
-    var wb = XLSX.utils.book_new();
-    var ws = XLSX.utils.aoa_to_sheet([
-      ['N. Orden','Fecha','SKU','Producto','Cantidad','Canal','Estado','Carrier'],
-      ...S.xlImported.map(function(o){
-        return [o.orderId, new Date(o.date).toLocaleDateString('es-AR'), o.sku, o.product||'', o.qty, o.canal||'ML', o.status, o.carrier||''];
-      })
-    ]);
-    ws['!cols'] = [14,12,20,36,8,14,12,12].map(function(w){return{wch:w};});
-    XLSX.utils.book_append_sheet(wb, ws, 'Ordenes');
-    var fname = 'PARKA_Ordenes_'+new Date().toISOString().slice(0,10)+'.xlsx';
-    var wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-    var blob  = new Blob([wbout], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    await gdUploadFile(blob, fname, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    if(btn){ btn.innerHTML='✓ Guardado en Drive'; btn.style.background='#D1FAE5'; btn.style.color='#065F46'; }
+    var today = new Date().toISOString().slice(0,10);
+    var flexOrders    = S.xlImported.filter(function(o){ return o.carrier==='flex'; });
+    var colectaOrders = S.xlImported.filter(function(o){ return o.carrier!=='flex'; }); // colecta/correo/punto/sin clasificar
+
+    var subidas = [];
+    if(flexOrders.length){
+      var wbF = _ordersSheet(flexOrders);
+      var wboutF = XLSX.write(wbF, {bookType:'xlsx', type:'array'});
+      var blobF = new Blob([wboutF], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      var folderF = await gdGetOrCreateDayFolder('flex');
+      var okF = await gdUploadFile(blobF, 'PARKA_Ordenes_Flex_'+today+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', folderF);
+      if(okF) subidas.push('Flex ('+flexOrders.length+')');
+    }
+    if(colectaOrders.length){
+      var wbC = _ordersSheet(colectaOrders);
+      var wboutC = XLSX.write(wbC, {bookType:'xlsx', type:'array'});
+      var blobC = new Blob([wboutC], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      var folderC = await gdGetOrCreateDayFolder('colecta');
+      var okC = await gdUploadFile(blobC, 'PARKA_Ordenes_Colecta_'+today+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', folderC);
+      if(okC) subidas.push('Colecta ('+colectaOrders.length+')');
+    }
+
+    // gdUploadFile ya tira un toast de éxito por cada archivo subido (con la carpeta/nombre real).
+    if(subidas.length && btn){ btn.innerHTML='✓ Guardado en Drive'; btn.style.background='#D1FAE5'; btn.style.color='#065F46'; }
   }catch(e){ toast('Error: '+e.message,'error'); }
   if(btn) btn.disabled=false;
 }
@@ -258,11 +286,46 @@ function gdCreateFolder(name){
   .catch(function(e){ toast('Error creando carpeta: '+e.message,'error'); });
 }
 
-// Subir archivo Excel a Drive (llamado desde generateControlReport y exportHistXL)
-async function gdUploadFile(blob, filename, mimeType){
-  if(!S.GD.token || !S.GD.folderId) return false;
+// Carpetas fijas de Drive para el despacho diario (mismas que usa "Flex de hoy" / "Colecta de
+// hoy" en Historial, ver index.html/driveHoy). Acá las usamos para SUBIR el reporte del día a
+// la subcarpeta correcta según el transportista, en vez de todo a la carpeta genérica S.GD.folderId.
+var GD_PARENTS = { flex:'1dhCrQ7mYCv5HqweRDaF_y4TPPGAPegOl', colecta:'1injla5TUawsfmCYcJsPA83xkoqF3r-Ng' };
+
+function gdHoy(){
+  var d = new Date();
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+
+// Busca (o crea) la subcarpeta con la fecha de hoy dentro de la carpeta Flex/Colecta.
+async function gdGetOrCreateDayFolder(kind){
+  var parent = GD_PARENTS[kind];
+  if(!parent || !S.GD.token) return null;
+  var today = gdHoy();
   try{
-    var meta = JSON.stringify({ name:filename, parents:[S.GD.folderId] });
+    var q = "'"+parent+"' in parents and name='"+today+"' and mimeType='application/vnd.google-apps.folder' and trashed=false";
+    var r = await fetch('https://www.googleapis.com/drive/v3/files?fields=files(id,name)&q='+encodeURIComponent(q), { headers:{ Authorization:'Bearer '+S.GD.token } });
+    var j = await r.json();
+    if(j.files && j.files.length) return j.files[0].id;
+    var r2 = await fetch('https://www.googleapis.com/drive/v3/files', {
+      method:'POST',
+      headers:{ Authorization:'Bearer '+S.GD.token, 'Content-Type':'application/json' },
+      body: JSON.stringify({ name:today, mimeType:'application/vnd.google-apps.folder', parents:[parent] })
+    });
+    var f2 = await r2.json();
+    return f2.id || null;
+  }catch(e){
+    console.warn('gdGetOrCreateDayFolder:', e);
+    return null;
+  }
+}
+
+// Subir archivo Excel a Drive (llamado desde generateControlReport, exportHistXL, gdSaveOrdersToDrive, etc.)
+// folderId es opcional: si no se pasa, usa la carpeta genérica configurada (S.GD.folderId).
+async function gdUploadFile(blob, filename, mimeType, folderId){
+  var targetFolder = folderId || S.GD.folderId;
+  if(!S.GD.token || !targetFolder) return false;
+  try{
+    var meta = JSON.stringify({ name:filename, parents:[targetFolder] });
     var form = new FormData();
     form.append('metadata', new Blob([meta],{type:'application/json'}));
     form.append('file', blob, filename);
