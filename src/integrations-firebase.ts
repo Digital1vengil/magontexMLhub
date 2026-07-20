@@ -60,8 +60,26 @@ function parseTNFile(file){
       var cTotal = ci('Total');
       var cEnvio = ci('Medio de envío');
       var cEstado= ci('Estado de la orden');
+      var cProd  = ci('Nombre del producto');
 
       if(cSKU<0) throw new Error('No se encontró columna SKU en el CSV');
+
+      // Talles reconocidos (mismo criterio que skuBase en util.ts) — para derivar
+      // color/talle del SKU de TN cuando el título no trae "(Color, Talle)".
+      var TALLES_RE = /^(XXS|XS|S|M|L|XL|2XL|XXL|3XL|XXXL|4XL|XXXXL|0|2|4|6|8|10|12|14|U|UNICO)$/i;
+      function tnVariant(sku, title){
+        // 1º intento: título viene como "Producto (Color, Talle)" (formato TN estándar)
+        var m = String(title||'').match(/\(([^,]+),\s*([^)]+)\)\s*$/);
+        if(m) return 'Color: '+m[1].trim()+' | Talle: '+m[2].trim();
+        // 2º intento: el SKU trae el talle como último segmento (ej. M-131-BLK-S)
+        var parts = String(sku).split('-');
+        if(parts.length>1 && TALLES_RE.test(parts[parts.length-1])){
+          var talle = parts[parts.length-1];
+          var color = parts.length>2 ? parts[parts.length-2] : '--';
+          return 'Color: '+color+' | Talle: '+talle;
+        }
+        return 'Color: -- | Talle: --';
+      }
 
       S.TN_DATA = [];
       for(var r=1;r<lines.length;r++){
@@ -75,14 +93,15 @@ function parseTNFile(file){
         var total   = parseFloat((row[cTotal]||'0').replace(',','.').replace(/[^\d.]/g,''))||0;
         var envio   = (row[cEnvio]||'').trim();
         var estado  = (row[cEstado]||'').trim().toLowerCase();
+        var titulo  = (row[cProd]||'').trim();
 
         // Parsear fecha dd/mm/yyyy hh:mm:ss
         var dateISO = new Date().toISOString().slice(0,10);
         var dm = fecha.match(/(\d{2})\/(\d{2})\/(\d{4})/);
         if(dm) dateISO = dm[3]+'-'+dm[2]+'-'+dm[1];
 
-        // Clasificar carrier
-        var carrier = 'tn';
+        // Clasificar carrier (default 'colecta', igual que ML, para que sume bien en los contadores)
+        var carrier = 'colecta';
         var env = envio.toLowerCase();
         if(env.includes('flex')) carrier='flex';
         else if(env.includes('colect')) carrier='colecta';
@@ -94,7 +113,7 @@ function parseTNFile(file){
         S.TN_DATA.push({
           platform:'tn', orderId:'TN-'+orderId,
           date: dateISO+'T12:00:00',
-          sku: sku, qty: qty, product: sku,
+          sku: sku, qty: qty, product: titulo||sku, variant: tnVariant(sku,titulo),
           status: status, total: total, canal:'Tienda Nube',
           carrier: carrier, buyer: buyer, envio: envio
         });

@@ -17,7 +17,7 @@ export function checkMobile(){
 window.addEventListener('resize', checkMobile);
 document.addEventListener('DOMContentLoaded', checkMobile);
 
-export function refreshHeaders(){const ml=S.platOrders.filter(o=>o.platform==='ml').length,tn=S.platOrders.filter(o=>o.platform==='tn').length,man=S.manualOrders.length;document.getElementById('h-ml').textContent=ml||'--';document.getElementById('h-tn').textContent=tn||'--';document.getElementById('h-man').textContent=man||'--';document.getElementById('h-total').textContent=(ml+tn+man)||'--';}
+export function refreshHeaders(){const ml=S.platOrders.filter(o=>o.platform==='ml').length,tn=S.platOrders.filter(o=>o.platform==='tn').length,man=S.manualOrders.length;const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};set('h-ml',ml||'--');set('h-tn',tn||'--');set('h-man',man||'--');set('h-total',(ml+tn+man)||'--');}
 export function nbadge(id,n){const e=document.getElementById(id);if(e){e.style.display=n>0?'':'none';e.textContent=n;}}
 export function toast(msg,type='info',ms=4000){const c=document.getElementById('toasts'),el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`<span>${{success:'✓',error:'✕',info:'ℹ'}[type]||'->'}</span><span>${msg}</span>`;c.appendChild(el);setTimeout(()=>el.remove(),ms);}
 
