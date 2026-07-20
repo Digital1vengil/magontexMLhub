@@ -79,12 +79,13 @@ function gdInit(){
     var fn = document.getElementById('gd-folder-name');
     var status = document.getElementById('gd-folder-status');
     var sname  = document.getElementById('gd-folder-status-name');
+    var fid = document.getElementById('gd-folder-id');
     if(fn) fn.value = S.GD.folderName;
     if(status && sname){
       sname.textContent = '📁 ' + S.GD.folderName;
       status.style.display = 'flex';
     }
-    document.getElementById('gd-folder-id').value = S.GD.folderId;
+    if(fid) fid.value = S.GD.folderId;
   }
 }
 
@@ -169,7 +170,9 @@ function gdDisconnect(){
 // Buscar carpetas en Drive
 function gdPickFolder(){
   if(!S.GD.token){ toast('Conectá Google Drive primero','error'); return; }
-  var q = document.getElementById('gd-folder-name').value.trim();
+  var qEl = document.getElementById('gd-folder-name');
+  if(!qEl) return;
+  var q = qEl.value.trim();
   if(!q){ toast('Escribí el nombre de la carpeta a buscar','error'); return; }
 
   fetch('https://www.googleapis.com/drive/v3/files?q='
@@ -180,6 +183,7 @@ function gdPickFolder(){
     .then(function(data){
       var list  = document.getElementById('gd-folder-list');
       var res   = document.getElementById('gd-folder-results');
+      if(!list || !res) return;
       if(!data.files || !data.files.length){
         res.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px">No se encontraron carpetas con ese nombre. ¿Querés crearla?</div>'
           + '<button class="btn btn-primary btn-sm" onclick="gdCreateFolder(\''+q+'\')" style="margin-top:6px">+ Crear "'+q+'"</button>';
@@ -203,13 +207,17 @@ function gdSelectFolder(id, name){
   S.GD.folderName = name;
   localStorage.setItem('parka_gd_folder_id',   id);
   localStorage.setItem('parka_gd_folder_name', name);
-  document.getElementById('gd-folder-id').value   = id;
-  document.getElementById('gd-folder-name').value = name;
+  var fid = document.getElementById('gd-folder-id');
+  var fname = document.getElementById('gd-folder-name');
+  if(fid) fid.value   = id;
+  if(fname) fname.value = name;
   // Mostrar estado visual
   var status = document.getElementById('gd-folder-status');
-  document.getElementById('gd-folder-status-name').textContent = '📁 ' + name;
-  status.style.display = 'flex';
-  document.getElementById('gd-folder-list').style.display = 'none';
+  var sname  = document.getElementById('gd-folder-status-name');
+  if(sname) sname.textContent = '📁 ' + name;
+  if(status) status.style.display = 'flex';
+  var list = document.getElementById('gd-folder-list');
+  if(list) list.style.display = 'none';
   toast('✓ Carpeta "'+name+'" seleccionada — los reportes se guardarán ahí','success');
 }
 
@@ -226,9 +234,12 @@ function gdClearFolder(){
   S.GD.folderId = ''; S.GD.folderName = '';
   localStorage.removeItem('parka_gd_folder_id');
   localStorage.removeItem('parka_gd_folder_name');
-  document.getElementById('gd-folder-id').value   = '';
-  document.getElementById('gd-folder-name').value = '';
-  document.getElementById('gd-folder-status').style.display = 'none';
+  var fid = document.getElementById('gd-folder-id');
+  var fname = document.getElementById('gd-folder-name');
+  var status = document.getElementById('gd-folder-status');
+  if(fid) fid.value   = '';
+  if(fname) fname.value = '';
+  if(status) status.style.display = 'none';
   toast('Carpeta removida','info');
 }
 
