@@ -350,6 +350,11 @@ function tnMergeWithML(){
     document.getElementById('xl-upload-state') && (document.getElementById('xl-upload-state').style.display='none');
     var rs=document.getElementById('xl-result-state'); if(rs) rs.style.display='flex';
     renderPlatTable();
+    // Refrescar también la tabla unificada de "Cargar órdenes" (S.xlFiltered), que es la que lee
+    // exportXLImportado() para el reporte. Sin esto, el Excel generado no incluía las órdenes de TN
+    // recién fusionadas hasta que el usuario tocaba el buscador manualmente.
+    var searchEl = document.getElementById('xl-search');
+    filterXL(searchEl ? searchEl.value : '');
   }
 }
 
