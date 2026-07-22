@@ -12,210 +12,256 @@ import { toast } from './core-ui'
 import { share, othersShare } from './geo-math'   // share 100%-stacked de la tendencia geográfica (métrica 12)
 
 // -- EXPORT: REPORTE SALIDAS VENTAS ML -- PARKA (XLSX) -----------------
-export function exportXLImportado(){
-  if(!S.xlFiltered.length){ toast('No hay órdenes importadas','error'); return; }
+// -- Paleta SOBRIA (gris/slate) — compartida Excel + vista previa ----
+const PAL = {
+  wh:'FFFFFF', title:'1F2937', hdr:'374151', sector:'111827',
+  sub:'F3F4F6', alt:'FAFAFA', txt:'111827', mut:'6B7280', softmut:'9CA3AF',
+  line:'E5E7EB', flex:'2563EB', flexbg:'EFF4FF', colecta:'B45309', colectabg:'FFF7ED', off:'D1D5DB'
+};
 
+// -- Modelo de datos del reporte (lo usan el Excel y la vista previa) --
+export function buildSalidasModel(){
+  if(!S.xlFiltered.length) return null;
   const today = new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'});
   const filename = (document.getElementById('xl-result-sub')||{}).textContent||'';
-
-  // -- Group by SKU+talle, sum qty + carriers -------------------
   const grouped = {};
   for(const o of S.xlFiltered){
     if(!o.sku||o.sku==='-'||o.sku==='--') continue;
     const {color,talle} = parseVariant(o.variant);
     const key = o.sku+'||'+talle;
     if(!grouped[key]) grouped[key]={sku:o.sku,base:skuBase(o.sku),color,talle,qty:0,flex:0,colecta:0,correo:0,punto:0,ids:[]};
-    grouped[key].qty      += o.qty;
-    grouped[key].ids.push(o.orderId);
-    const c = o.carrier||'colecta';
-    if(c==='flex')    grouped[key].flex    += o.qty;
-    else if(c==='correo') grouped[key].correo += o.qty;
-    else if(c==='punto')  grouped[key].punto  += o.qty;
-    else                  grouped[key].colecta += o.qty;
+    grouped[key].qty += o.qty; grouped[key].ids.push(o.orderId);
+    const cr=o.carrier||'colecta';
+    if(cr==='flex') grouped[key].flex+=o.qty;
+    else if(cr==='correo') grouped[key].correo+=o.qty;
+    else if(cr==='punto') grouped[key].punto+=o.qty;
+    else grouped[key].colecta+=o.qty;
   }
-
   const rows = Object.values(grouped).sort((a,b)=>skuSortKey(a.sku).localeCompare(skuSortKey(b.sku)));
-  // Sector de depósito por artículo (mapeo por modelo + color). '' si no matchea.
   for(const r of rows){ r.sector = sectorForArticle(r.sku, r.base, r.color) || ''; }
-  const baseGroups = {};
-  for(const r of rows){ if(!baseGroups[r.base]) baseGroups[r.base]=[]; baseGroups[r.base].push(r); }
-  const bases = Object.keys(baseGroups).sort((a,b)=>skuSortKey(a).localeCompare(skuSortKey(b)));
-
-  // Multi-package
-  const packageMap = {};
-  for(const o of S.xlFiltered){ if(!o.packageKey) continue; if(!packageMap[o.packageKey]) packageMap[o.packageKey]=[]; packageMap[o.packageKey].push(o); }
-  const multiKeys = Object.keys(packageMap).filter(k=>packageMap[k].length>=2);
-
-  const totalUnits  = rows.reduce((s,r)=>s+r.qty,0);
-  const totalFlex   = rows.reduce((s,r)=>s+r.flex,0);
-  const totalColec  = rows.reduce((s,r)=>s+r.colecta,0);
-  const totalCorreo = rows.reduce((s,r)=>s+r.correo,0);
-
-  // -- Paleta sobria: slate + acento indigo ---------------------
-  const WH  = 'FFFFFF';
-  const INK = '0F172A'; // slate-900 - banda de sector (la mas destacada)
-  const HDR = '1E293B'; // slate-800 - encabezado de columnas
-  const ACC = '4F46E5'; // indigo-600 - titulo / acento
-  const ACC2= 'EEF2FF'; // indigo-50 - tinte suave
-  const SUB = 'E2E8F0'; // slate-200 - sub-encabezado por modelo
-  const ALT = 'F8FAFC'; // slate-50 - fila alternada
-  const TXT = '0F172A'; // texto principal
-  const MUT = '64748B'; // slate-500 - texto atenuado
-  const LINE= 'E2E8F0'; // borde
-  const OKB = '4F46E5'; // flex (indigo)
-  const OKBL= 'EEF2FF';
-  const AMB = 'B45309'; // colecta (ambar)
-  const AMBL= 'FFF7ED';
-  const OFF = 'CBD5E1'; // "--" atenuado
-
-  function c(v, bg, fg, sz, bold, align, wrap, italic){
-    return {
-      v: v===undefined||v===null?'':v,
-      t: typeof v==='number'?'n':'s',
-      s:{
-        fill:{fgColor:{rgb:bg||WH}, patternType:'solid'},
-        font:{name:'Calibri',sz:sz||11,bold:!!bold,italic:!!italic,color:{rgb:fg||TXT}},
-        alignment:{horizontal:align||'left',vertical:'center',wrapText:!!wrap},
-        border:{
-          top:{style:'thin',color:{rgb:LINE}},bottom:{style:'thin',color:{rgb:LINE}},
-          left:{style:'thin',color:{rgb:LINE}},right:{style:'thin',color:{rgb:LINE}},
-        }
-      }
-    };
-  }
-
-  const ws={};
-  let R=0;
-  const SC=(col,row,cell)=>{ ws[XLSX.utils.encode_cell({r:row,c:col})]=cell; };
-  const COLS=7; // A=SKU B=Talle C=Unidades D=IDs E=Flex F=Colecta G=Sector
-
-  // -- Titulo (banda indigo) ------------------------------------
-  for(let col=0;col<COLS;col++) SC(col,R,c('',ACC,WH,11));
-  SC(0,R,c('PARKA · REPORTE DE SALIDAS',ACC,WH,16,true,'left'));
-  ws['!merges']=[{s:{r:R,c:0},e:{r:R,c:COLS-1}}]; R++;
-  // subtitulo
-  for(let col=0;col<COLS;col++) SC(col,R,c('',ACC,WH,10));
-  SC(0,R,c('Ventas Mercado Libre   ·   '+today+(filename?('   ·   '+filename):''),ACC,'C7D2FE',10,false,'left',false,true));
-  ws['!merges'].push({s:{r:R,c:0},e:{r:R,c:COLS-1}}); R++;
-  // spacer
-  for(let col=0;col<COLS;col++) SC(col,R,c('',WH)); R++;
-
-  // -- Stats (label atenuado + valor grande) --------------------
-  const sLabels=['SKUs UNICOS','UNIDADES','FLEX','COLECTA'];
-  const sVals  =[rows.length, totalUnits, totalFlex, totalColec];
-  const sFg    =[TXT, TXT, OKB, AMB];
-  for(let col=0;col<4;col++) SC(col,R,c(sLabels[col],WH,MUT,9,true,'center'));
-  SC(4,R,c('',WH)); SC(5,R,c('',WH)); SC(6,R,c('',WH)); R++;
-  for(let col=0;col<4;col++) SC(col,R,c(sVals[col],WH,sFg[col],20,true,'center'));
-  SC(4,R,c('',WH)); SC(5,R,c('',WH)); SC(6,R,c('',WH)); R++;
-  // spacer
-  for(let col=0;col<COLS;col++) SC(col,R,c('',WH)); R++;
-
-  // -- Encabezado de columnas -----------------------------------
-  const hLabels=['ARTICULO / SKU','TALLE','UNID.','N° DE VENTA / IDs','FLEX','COLECTA','SECTOR'];
-  const hAligns=['left','center','center','left','center','center','center'];
-  for(let col=0;col<COLS;col++) SC(col,R,c(hLabels[col],HDR,WH,10,true,hAligns[col]));
-  const headerRow=R; R++;
-
-  // -- Multi-articulo (acento indigo suave) ---------------------
-  if(multiKeys.length){
-    for(let col=0;col<COLS;col++) SC(col,R,c('',ACC2,ACC,10));
-    SC(0,R,c('ETIQUETAS MULTI-ARTICULO ('+multiKeys.length+') — contienen 2+ articulos. Prepararlas juntas.',ACC2,ACC,10,true,'left'));
-    ws['!merges'].push({s:{r:R,c:0},e:{r:R,c:COLS-1}}); R++;
-    for(const pk of multiKeys){
-      const items=packageMap[pk]; const ids=[...new Set(items.map(o=>o.orderId))];
-      for(let col=0;col<COLS;col++) SC(col,R,c('',ALT,MUT,10));
-      SC(0,R,c('📦 '+pk.slice(-16),ALT,TXT,10,true));
-      SC(2,R,c(items.length+' art.',ALT,MUT,10,false,'center'));
-      SC(3,R,c(ids.join('  '),ALT,MUT,9,false,'left',true)); R++;
-      for(const it of items){
-        const {talle,color}=parseVariant(it.variant); const cr=it.carrier||'colecta';
-        for(let col=0;col<COLS;col++) SC(col,R,c('',WH,TXT,11));
-        SC(0,R,c('   → '+it.sku,WH,TXT,11,true));
-        SC(1,R,c(talle,WH,TXT,11,false,'center'));
-        SC(2,R,c(it.qty,WH,TXT,12,true,'center'));
-        SC(3,R,c(it.orderId,WH,MUT,9));
-        SC(4,R,c(cr==='flex'?it.qty:'--',cr==='flex'?OKBL:WH,cr==='flex'?OKB:OFF,11,cr==='flex','center'));
-        SC(5,R,c(cr==='colecta'?it.qty:'--',cr==='colecta'?AMBL:WH,cr==='colecta'?AMB:OFF,11,cr==='colecta','center'));
-        SC(6,R,c(sectorForArticle(it.sku,skuBase(it.sku),color)||'--',WH,MUT,10,false,'center')); R++;
-      }
-    }
-    for(let col=0;col<COLS;col++) SC(col,R,c('',WH)); R++;
-  }
-
-  // -- Agrupar por SECTOR ---------------------------------------
+  const packageMap={};
+  for(const o of S.xlFiltered){ if(!o.packageKey) continue; (packageMap[o.packageKey]=packageMap[o.packageKey]||[]).push(o); }
+  const multi = Object.keys(packageMap).filter(k=>packageMap[k].length>=2).map(pk=>{
+    const items=packageMap[pk];
+    return { pk, ids:[...new Set(items.map(o=>o.orderId))],
+      items: items.map(it=>{ const {talle,color}=parseVariant(it.variant); return {sku:it.sku,talle,qty:it.qty,orderId:it.orderId,carrier:it.carrier||'colecta',sector:sectorForArticle(it.sku,skuBase(it.sku),color)||''}; }) };
+  });
   const bySector={};
-  for(const r of rows){ const sec=r.sector||'Sin sector'; (bySector[sec]=bySector[sec]||[]).push(r); }
+  for(const r of rows){ const s=r.sector||'Sin sector'; (bySector[s]=bySector[s]||[]).push(r); }
   const order=mapeoSectorOrder();
-  const firstTok=s=> s==='Sin sector' ? '' : String(s).split(' / ')[0];
-  const secList=Object.keys(bySector).sort((a,b)=>{
+  const firstTok=s=> s==='Sin sector'?'':String(s).split(' / ')[0];
+  const secNames=Object.keys(bySector).sort((a,b)=>{
     if(a==='Sin sector') return 1; if(b==='Sin sector') return -1;
     const ia=order.indexOf(firstTok(a)), ib=order.indexOf(firstTok(b));
     if(ia<0&&ib<0) return a.localeCompare(b); if(ia<0) return 1; if(ib<0) return -1;
     if(ia!==ib) return ia-ib; return a.localeCompare(b);
   });
+  const sectors=secNames.map(name=>{
+    const sr=bySector[name];
+    const bg2={}; for(const r of sr){ (bg2[r.base]=bg2[r.base]||[]).push(r); }
+    const bases=Object.keys(bg2).sort((a,b)=>skuSortKey(a).localeCompare(skuSortKey(b))).map(base=>{
+      const items=bg2[base];
+      return { base, total:items.reduce((s,i)=>s+i.qty,0), flex:items.reduce((s,i)=>s+i.flex,0), colecta:items.reduce((s,i)=>s+i.colecta,0),
+        items: items.map(i=>({sku:i.sku,talle:i.talle,qty:i.qty,ids:i.ids.join('  '),flex:i.flex,colecta:i.colecta,sector:i.sector})) };
+    });
+    return { name, total:sr.reduce((s,i)=>s+i.qty,0), skus:sr.length, bases };
+  });
+  return { today, filename,
+    stats:{ skus:rows.length, units:rows.reduce((s,r)=>s+r.qty,0), flex:rows.reduce((s,r)=>s+r.flex,0), colecta:rows.reduce((s,r)=>s+r.colecta,0) },
+    multi, sectors };
+}
 
+// -- EXPORT XLSX (formato sobrio) ------------------------------------
+export function exportXLImportado(){
+  const M = buildSalidasModel();
+  if(!M){ toast('No hay órdenes importadas','error'); return; }
+  const WH=PAL.wh, TXT=PAL.txt, MUT=PAL.mut, LINE=PAL.line;
+
+  function c(v, bg, fg, sz, bold, align, wrap, italic){
+    return { v: v===undefined||v===null?'':v, t: typeof v==='number'?'n':'s',
+      s:{ fill:{fgColor:{rgb:bg||WH}, patternType:'solid'},
+        font:{name:'Calibri',sz:sz||11,bold:!!bold,italic:!!italic,color:{rgb:fg||TXT}},
+        alignment:{horizontal:align||'left',vertical:'center',wrapText:!!wrap},
+        border:{ top:{style:'thin',color:{rgb:LINE}},bottom:{style:'thin',color:{rgb:LINE}},
+          left:{style:'thin',color:{rgb:LINE}},right:{style:'thin',color:{rgb:LINE}} } } };
+  }
+  const ws={}; let R=0;
+  const SC=(col,row,cell)=>{ ws[XLSX.utils.encode_cell({r:row,c:col})]=cell; };
+  const COLS=7;
+
+  // Título
+  for(let col=0;col<COLS;col++) SC(col,R,c('',PAL.title,WH,11));
+  SC(0,R,c('PARKA · REPORTE DE SALIDAS',PAL.title,WH,16,true,'left'));
+  ws['!merges']=[{s:{r:R,c:0},e:{r:R,c:COLS-1}}]; R++;
+  for(let col=0;col<COLS;col++) SC(col,R,c('',PAL.title,WH,10));
+  SC(0,R,c('Ventas Mercado Libre   ·   '+M.today+(M.filename?('   ·   '+M.filename):''),PAL.title,'D1D5DB',10,false,'left',false,true));
+  ws['!merges'].push({s:{r:R,c:0},e:{r:R,c:COLS-1}}); R++;
+  for(let col=0;col<COLS;col++) SC(col,R,c('',WH)); R++;
+
+  // Stats
+  const sLabels=['SKUs UNICOS','UNIDADES','FLEX','COLECTA'];
+  const sVals=[M.stats.skus,M.stats.units,M.stats.flex,M.stats.colecta];
+  const sFg=[TXT,TXT,PAL.flex,PAL.colecta];
+  for(let col=0;col<4;col++) SC(col,R,c(sLabels[col],WH,MUT,9,true,'center'));
+  SC(4,R,c('',WH)); SC(5,R,c('',WH)); SC(6,R,c('',WH)); R++;
+  for(let col=0;col<4;col++) SC(col,R,c(sVals[col],WH,sFg[col],20,true,'center'));
+  SC(4,R,c('',WH)); SC(5,R,c('',WH)); SC(6,R,c('',WH)); R++;
+  for(let col=0;col<COLS;col++) SC(col,R,c('',WH)); R++;
+
+  // Header
+  const hLabels=['ARTICULO / SKU','TALLE','UNID.','N° DE VENTA / IDs','FLEX','COLECTA','SECTOR'];
+  const hAligns=['left','center','center','left','center','center','center'];
+  for(let col=0;col<COLS;col++) SC(col,R,c(hLabels[col],PAL.hdr,WH,10,true,hAligns[col]));
+  const headerRow=R; R++;
+
+  // Multi-artículo
+  if(M.multi.length){
+    for(let col=0;col<COLS;col++) SC(col,R,c('',PAL.sub,TXT,10));
+    SC(0,R,c('ETIQUETAS MULTI-ARTICULO ('+M.multi.length+') — contienen 2+ articulos. Prepararlas juntas.',PAL.sub,TXT,10,true,'left'));
+    ws['!merges'].push({s:{r:R,c:0},e:{r:R,c:COLS-1}}); R++;
+    for(const g of M.multi){
+      for(let col=0;col<COLS;col++) SC(col,R,c('',PAL.alt,MUT,10));
+      SC(0,R,c('📦 '+g.pk.slice(-16),PAL.alt,TXT,10,true));
+      SC(2,R,c(g.items.length+' art.',PAL.alt,MUT,10,false,'center'));
+      SC(3,R,c(g.ids.join('  '),PAL.alt,MUT,9,false,'left',true)); R++;
+      for(const it of g.items){
+        for(let col=0;col<COLS;col++) SC(col,R,c('',WH,TXT,11));
+        SC(0,R,c('   → '+it.sku,WH,TXT,11,true));
+        SC(1,R,c(it.talle,WH,TXT,11,false,'center'));
+        SC(2,R,c(it.qty,WH,TXT,12,true,'center'));
+        SC(3,R,c(it.orderId,WH,MUT,9));
+        SC(4,R,c(it.carrier==='flex'?it.qty:'--',it.carrier==='flex'?PAL.flexbg:WH,it.carrier==='flex'?PAL.flex:PAL.off,11,it.carrier==='flex','center'));
+        SC(5,R,c(it.carrier==='colecta'?it.qty:'--',it.carrier==='colecta'?PAL.colectabg:WH,it.carrier==='colecta'?PAL.colecta:PAL.off,11,it.carrier==='colecta','center'));
+        SC(6,R,c(it.sector||'--',WH,MUT,10,false,'center')); R++;
+      }
+    }
+    for(let col=0;col<COLS;col++) SC(col,R,c('',WH)); R++;
+  }
+
+  // Sectores
   const sectorRows=[];
-  for(const sec of secList){
-    const secRows=bySector[sec]; const secTotal=secRows.reduce((s,i)=>s+i.qty,0);
-    // Banda de sector DESTACADA (slate-900, alta, grande)
-    for(let col=0;col<COLS;col++) SC(col,R,c('',INK,WH,14));
-    SC(0,R,c('▍ '+sec.toUpperCase(),INK,WH,14,true,'left'));
-    SC(2,R,c(secTotal,INK,WH,14,true,'center'));
-    SC(3,R,c(secRows.length+' SKUs   ·   '+secTotal+' unid.',INK,'CBD5E1',10,false,'right',false,true));
-    SC(COLS-1,R,c(sec,INK,'CBD5E1',10,true,'center'));
+  for(const sec of M.sectors){
+    for(let col=0;col<COLS;col++) SC(col,R,c('',PAL.sector,WH,14));
+    SC(0,R,c('▍ '+sec.name.toUpperCase(),PAL.sector,WH,14,true,'left'));
+    SC(2,R,c(sec.total,PAL.sector,WH,14,true,'center'));
+    SC(3,R,c(sec.skus+' SKUs   ·   '+sec.total+' unid.',PAL.sector,'D1D5DB',10,false,'right',false,true));
+    SC(COLS-1,R,c(sec.name,PAL.sector,'D1D5DB',10,true,'center'));
     sectorRows.push(R); R++;
-
-    const bg2={};
-    for(const r of secRows){ (bg2[r.base]=bg2[r.base]||[]).push(r); }
-    const basesIn=Object.keys(bg2).sort((a,b)=>skuSortKey(a).localeCompare(skuSortKey(b)));
-    for(const base of basesIn){
-      const items=bg2[base]; const bTotal=items.reduce((s,i)=>s+i.qty,0);
-      const bFlex=items.reduce((s,i)=>s+i.flex,0); const bColecta=items.reduce((s,i)=>s+i.colecta,0);
-      // Sub-encabezado por modelo (slate-200)
-      for(let col=0;col<COLS;col++) SC(col,R,c('',SUB,TXT,11));
-      SC(0,R,c(base,SUB,TXT,11,true));
-      SC(2,R,c(bTotal,SUB,TXT,12,true,'center'));
-      SC(3,R,c('subtotal '+bTotal+' u.',SUB,MUT,9,false,'right',false,true));
-      SC(4,R,c(bFlex||'',SUB,MUT,10,false,'center'));
-      SC(5,R,c(bColecta||'',SUB,MUT,10,false,'center'));
-      SC(6,R,c('',SUB,TXT,11)); R++;
-      for(let i=0;i<items.length;i++){
-        const item=items[i]; const bg=i%2===0?WH:ALT; const idsStr=item.ids.join('  ');
-        SC(0,R,c('   '+item.sku,bg,TXT,11,true));
-        SC(1,R,c(item.talle,bg,TXT,11,false,'center'));
-        SC(2,R,c(item.qty,bg,TXT,12,true,'center'));
-        SC(3,R,c(idsStr,bg,MUT,9,false,'left',true));
-        SC(4,R,c(item.flex?item.flex:'--',item.flex?OKBL:bg,item.flex?OKB:OFF,11,!!item.flex,'center'));
-        SC(5,R,c(item.colecta?item.colecta:'--',item.colecta?AMBL:bg,item.colecta?AMB:OFF,11,!!item.colecta,'center'));
-        SC(6,R,c(item.sector||'--',bg,item.sector?TXT:OFF,10,!!item.sector,'center')); R++;
+    for(const b of sec.bases){
+      for(let col=0;col<COLS;col++) SC(col,R,c('',PAL.sub,TXT,11));
+      SC(0,R,c(b.base,PAL.sub,TXT,11,true));
+      SC(2,R,c(b.total,PAL.sub,TXT,12,true,'center'));
+      SC(3,R,c('subtotal '+b.total+' u.',PAL.sub,MUT,9,false,'right',false,true));
+      SC(4,R,c(b.flex||'',PAL.sub,MUT,10,false,'center'));
+      SC(5,R,c(b.colecta||'',PAL.sub,MUT,10,false,'center'));
+      SC(6,R,c('',PAL.sub,TXT,11)); R++;
+      for(let i=0;i<b.items.length;i++){
+        const it=b.items[i]; const bg=i%2===0?WH:PAL.alt;
+        SC(0,R,c('   '+it.sku,bg,TXT,11,true));
+        SC(1,R,c(it.talle,bg,TXT,11,false,'center'));
+        SC(2,R,c(it.qty,bg,TXT,12,true,'center'));
+        SC(3,R,c(it.ids,bg,MUT,9,false,'left',true));
+        SC(4,R,c(it.flex?it.flex:'--',it.flex?PAL.flexbg:bg,it.flex?PAL.flex:PAL.off,11,!!it.flex,'center'));
+        SC(5,R,c(it.colecta?it.colecta:'--',it.colecta?PAL.colectabg:bg,it.colecta?PAL.colecta:PAL.off,11,!!it.colecta,'center'));
+        SC(6,R,c(it.sector||'--',bg,it.sector?TXT:PAL.off,10,!!it.sector,'center')); R++;
       }
     }
   }
 
-  // Footer
   for(let col=0;col<COLS;col++) SC(col,R,c('',WH)); R++;
   SC(0,R,c('PARKA Sales Hub',WH,MUT,9,false,'left',false,true));
-  SC(COLS-1,R,c('Generado el '+today,WH,MUT,9,false,'right',false,true)); R++;
+  SC(COLS-1,R,c('Generado el '+M.today,WH,MUT,9,false,'right',false,true)); R++;
 
-  // -- Sheet setup ----------------------------------------------
-  ws['!ref']  = XLSX.utils.encode_range({s:{r:0,c:0},e:{r:R-1,c:COLS-1}});
-  ws['!cols'] = [{wch:30},{wch:8},{wch:9},{wch:40},{wch:9},{wch:10},{wch:18}];
-  ws['!rows'] = Array.from({length:R},(_,i)=>{
-    if(i===0) return {hpt:30};
-    if(i===1) return {hpt:16};
-    if(i===4) return {hpt:30};
-    if(i===headerRow) return {hpt:20};
-    if(sectorRows.includes(i)) return {hpt:26};
-    return {hpt:17};
+  ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:R-1,c:COLS-1}});
+  ws['!cols']=[{wch:30},{wch:8},{wch:9},{wch:40},{wch:9},{wch:10},{wch:18}];
+  ws['!rows']=Array.from({length:R},(_,i)=>{
+    if(i===0) return {hpt:30}; if(i===1) return {hpt:16}; if(i===4) return {hpt:30};
+    if(i===headerRow) return {hpt:20}; if(sectorRows.includes(i)) return {hpt:26}; return {hpt:17};
   });
-  ws['!freeze'] = {xSplit:0, ySplit:headerRow+1, topLeftCell:XLSX.utils.encode_cell({r:headerRow+1,c:0})};
+  ws['!freeze']={xSplit:0,ySplit:headerRow+1,topLeftCell:XLSX.utils.encode_cell({r:headerRow+1,c:0})};
 
-  const wbOut = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wbOut, ws, 'Salidas ML');
-  XLSX.writeFile(wbOut, `PARKA_Salidas_ML_${new Date().toISOString().slice(0,10)}.xlsx`);
+  const wbOut=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wbOut,ws,'Salidas ML');
+  XLSX.writeFile(wbOut,`PARKA_Salidas_ML_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('Excel exportado — formato PARKA','success');
 }
+
+// -- VISTA PREVIA (modal HTML, igual al Excel) -----------------------
+export function previewSalidas(){
+  const M = buildSalidasModel();
+  if(!M){ toast('No hay órdenes importadas','error'); return; }
+  const H = s => '#'+s;
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  const cell = (v,extra) => '<td style="padding:5px 8px;border:1px solid '+H(PAL.line)+';'+(extra||'')+'">'+v+'</td>';
+  let body='';
+  // Multi
+  if(M.multi.length){
+    body+='<tr><td colspan="7" style="padding:6px 8px;background:'+H(PAL.sub)+';color:'+H(PAL.txt)+';font-weight:700;border:1px solid '+H(PAL.line)+'">✂ Etiquetas multi-artículo ('+M.multi.length+')</td></tr>';
+    for(const g of M.multi){
+      body+='<tr><td colspan="7" style="padding:4px 8px;background:'+H(PAL.alt)+';color:'+H(PAL.mut)+';border:1px solid '+H(PAL.line)+'">📦 '+esc(g.pk.slice(-16))+' · '+g.items.length+' art. · '+esc(g.ids.join('  '))+'</td></tr>';
+      for(const it of g.items){
+        body+='<tr>'+cell('→ '+esc(it.sku),'font-weight:600')+cell(esc(it.talle),'text-align:center')+cell(it.qty,'text-align:center;font-weight:700')+cell(esc(it.orderId),'color:'+H(PAL.mut)+';font-size:11px')
+          +cell(it.carrier==='flex'?it.qty:'—','text-align:center;'+(it.carrier==='flex'?'background:'+H(PAL.flexbg)+';color:'+H(PAL.flex)+';font-weight:700':'color:'+H(PAL.off)))
+          +cell(it.carrier==='colecta'?it.qty:'—','text-align:center;'+(it.carrier==='colecta'?'background:'+H(PAL.colectabg)+';color:'+H(PAL.colecta)+';font-weight:700':'color:'+H(PAL.off)))
+          +cell(esc(it.sector||'—'),'text-align:center;color:'+H(PAL.mut))+'</tr>';
+      }
+    }
+  }
+  // Sectores
+  for(const sec of M.sectors){
+    body+='<tr><td colspan="4" style="padding:8px;background:'+H(PAL.sector)+';color:#fff;font-weight:800;font-size:14px;border:1px solid '+H(PAL.line)+'">▍ '+esc(sec.name.toUpperCase())+'  ·  '+sec.total+' u.</td>'
+      +'<td colspan="3" style="padding:8px;background:'+H(PAL.sector)+';color:#D1D5DB;text-align:right;border:1px solid '+H(PAL.line)+'">'+sec.skus+' SKUs</td></tr>';
+    for(const b of sec.bases){
+      body+='<tr>'
+        +'<td style="padding:5px 8px;background:'+H(PAL.sub)+';font-weight:700;border:1px solid '+H(PAL.line)+'">'+esc(b.base)+'</td>'
+        +'<td style="background:'+H(PAL.sub)+';border:1px solid '+H(PAL.line)+'"></td>'
+        +'<td style="padding:5px 8px;background:'+H(PAL.sub)+';text-align:center;font-weight:700;border:1px solid '+H(PAL.line)+'">'+b.total+'</td>'
+        +'<td style="padding:5px 8px;background:'+H(PAL.sub)+';text-align:right;color:'+H(PAL.mut)+';font-size:11px;border:1px solid '+H(PAL.line)+'">subtotal '+b.total+' u.</td>'
+        +'<td style="padding:5px 8px;background:'+H(PAL.sub)+';text-align:center;color:'+H(PAL.mut)+';border:1px solid '+H(PAL.line)+'">'+(b.flex||'')+'</td>'
+        +'<td style="padding:5px 8px;background:'+H(PAL.sub)+';text-align:center;color:'+H(PAL.mut)+';border:1px solid '+H(PAL.line)+'">'+(b.colecta||'')+'</td>'
+        +'<td style="background:'+H(PAL.sub)+';border:1px solid '+H(PAL.line)+'"></td></tr>';
+      for(let i=0;i<b.items.length;i++){
+        const it=b.items[i]; const bg=i%2===0?'#fff':H(PAL.alt);
+        body+='<tr style="background:'+bg+'">'+cell('&nbsp;&nbsp;'+esc(it.sku),'font-weight:600')+cell(esc(it.talle),'text-align:center')+cell(it.qty,'text-align:center;font-weight:700')+cell(esc(it.ids),'color:'+H(PAL.mut)+';font-size:11px')
+          +cell(it.flex?it.flex:'—','text-align:center;'+(it.flex?'background:'+H(PAL.flexbg)+';color:'+H(PAL.flex)+';font-weight:700':'color:'+H(PAL.off)))
+          +cell(it.colecta?it.colecta:'—','text-align:center;'+(it.colecta?'background:'+H(PAL.colectabg)+';color:'+H(PAL.colecta)+';font-weight:700':'color:'+H(PAL.off)))
+          +cell(esc(it.sector||'—'),'text-align:center;font-weight:'+(it.sector?'600':'400')+';color:'+(it.sector?H(PAL.txt):H(PAL.off)))+'</tr>';
+      }
+    }
+  }
+  const statCard=(lbl,val,col)=>'<div style="flex:1;text-align:center"><div style="font-size:11px;color:'+H(PAL.mut)+';font-weight:700;letter-spacing:.04em">'+lbl+'</div><div style="font-size:26px;font-weight:800;color:'+col+'">'+val+'</div></div>';
+  const html=''
+    +'<div style="background:'+H(PAL.title)+';color:#fff;padding:14px 16px;border-radius:10px 10px 0 0">'
+      +'<div style="font-size:18px;font-weight:800">PARKA · REPORTE DE SALIDAS</div>'
+      +'<div style="font-size:12px;color:#D1D5DB;margin-top:2px">Ventas Mercado Libre · '+esc(M.today)+(M.filename?(' · '+esc(M.filename)):'')+'</div></div>'
+    +'<div style="display:flex;gap:8px;padding:14px 16px;background:#fff;border-left:1px solid '+H(PAL.line)+';border-right:1px solid '+H(PAL.line)+'">'
+      +statCard('SKUs ÚNICOS',M.stats.skus,H(PAL.txt))+statCard('UNIDADES',M.stats.units,H(PAL.txt))+statCard('FLEX',M.stats.flex,H(PAL.flex))+statCard('COLECTA',M.stats.colecta,H(PAL.colecta))+'</div>'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px;font-family:Inter,Arial,sans-serif;color:'+H(PAL.txt)+'">'
+      +'<thead><tr>'
+        +['ARTÍCULO / SKU','TALLE','UNID.','N° DE VENTA / IDs','FLEX','COLECTA','SECTOR'].map((h,i)=>'<th style="padding:7px 8px;background:'+H(PAL.hdr)+';color:#fff;text-align:'+(i===0||i===3?'left':'center')+';border:1px solid '+H(PAL.line)+';position:sticky;top:0">'+h+'</th>').join('')
+      +'</tr></thead><tbody>'+body+'</tbody></table>';
+
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  const box=document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:12px;max-width:1000px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)';
+  const bar=document.createElement('div');
+  bar.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid '+H(PAL.line)+';background:#fff';
+  bar.innerHTML='<div style="font-weight:700;font-size:14px;color:'+H(PAL.txt)+'">Vista previa del reporte</div>';
+  const btns=document.createElement('div'); btns.style.cssText='display:flex;gap:8px';
+  const cancel=document.createElement('button'); cancel.className='btn btn-ghost btn-sm'; cancel.textContent='Cerrar';
+  const dl=document.createElement('button'); dl.className='btn btn-primary btn-sm'; dl.textContent='⬇ Descargar Excel';
+  btns.appendChild(cancel); btns.appendChild(dl); bar.appendChild(btns);
+  const scroll=document.createElement('div'); scroll.style.cssText='overflow:auto;padding:14px;background:#F9FAFB';
+  scroll.innerHTML=html;
+  box.appendChild(bar); box.appendChild(scroll); ov.appendChild(box); document.body.appendChild(ov);
+  const close=()=>{ document.removeEventListener('keydown',onKey); ov.remove(); };
+  const onKey=e=>{ if(e.key==='Escape'){ e.preventDefault(); close(); } };
+  cancel.onclick=close; ov.onclick=e=>{ if(e.target===ov) close(); };
+  dl.onclick=()=>{ exportXLImportado(); close(); };
+  document.addEventListener('keydown',onKey);
+}
+try{ window.previewSalidas=previewSalidas; }catch(e){}
 
 /* Charts */
 export function mkChart(id,type,labels,datasets,opts){

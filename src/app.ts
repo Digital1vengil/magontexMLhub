@@ -16,7 +16,7 @@ import { preciosRender } from './pricing'
 import './dispatch-pdf'
 import { classifyCarrier, renderDespachos, generateControlReport } from './dispatch-pdf'
 import './report'
-import { exportXLImportado, buildAllCharts, renderStats, renderTop10, rsmBuild2 } from './report'
+import { exportXLImportado, previewSalidas, buildAllCharts, renderStats, renderTop10, rsmBuild2 } from './report'
 import './history'
 import { vmlRender2, filterHist, renderHCargas, renderHistorial, confirmToHistorial } from './history'
 import './reclamos'
@@ -362,7 +362,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
   // Wire import section buttons
   const btnExportXL = document.getElementById('btn-export-xl');
-  if(btnExportXL) btnExportXL.addEventListener('click', exportXLImportado);
+  if(btnExportXL) btnExportXL.addEventListener('click', previewSalidas);
   const btnNewRep = document.getElementById('btn-new-report');
   if(btnNewRep) btnNewRep.addEventListener('click', newReport);
   const btnConfHist = document.getElementById('btn-confirm-hist');
