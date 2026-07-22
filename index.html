@@ -608,6 +608,45 @@
 </div>
 
 <!-- HISTORIAL CARGAS -->
+<!-- MAPEO -->
+<div class="sec" id="sec-mapeo">
+  <div class="sec-head">
+    <div class="sec-title">Mapeo de depósito</div>
+    <div class="sec-sub">Sectores del depósito y sus artículos. Cada tarjeta es un sector — hacé clic para ver y editar. Los cambios quedan guardados y se usan en el reporte de salidas.</div>
+  </div>
+  <div class="sec-body">
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Sectores <span id="mapeo-count" style="font-weight:400;color:var(--text-muted);font-size:12px"></span></span>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" onclick="mapeoAddSector()">+ Sector</button>
+          <button class="btn btn-ghost btn-sm" onclick="mapeoReset()" title="Restaurar al Excel original">↺ Restaurar Excel</button>
+        </div>
+      </div>
+      <div id="mapeo-grid" class="mapeo-grid"></div>
+    </div>
+  </div>
+  <style>
+    .mapeo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:4px 0}
+    .mapeo-card{border:1px solid var(--border,#334);border-radius:12px;background:var(--card,#fff);overflow:hidden;transition:box-shadow .15s;align-self:start}
+    .mapeo-card.open{grid-column:1/-1;box-shadow:0 6px 24px rgba(0,0,0,.10)}
+    .mapeo-card-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:16px 14px;border:0;background:transparent;cursor:pointer;font:inherit;color:inherit;text-align:left}
+    .mapeo-card-head:hover{background:var(--bg-soft,rgba(0,0,0,.03))}
+    .mapeo-card-title{font-weight:700;font-size:15px}
+    .mapeo-card-meta{font-size:12px;color:var(--text-muted,#889);white-space:nowrap}
+    .mapeo-caret{margin-left:4px;font-size:10px}
+    .mapeo-body{padding:0 14px 14px;border-top:1px solid var(--border,#334)}
+    .mapeo-art{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px dashed var(--border,#e5e7eb)}
+    .mapeo-art-main{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .mapeo-art-btns{display:flex;gap:4px;flex-shrink:0}
+    .mapeo-modelo{font-weight:600;font-size:13px}
+    .mapeo-chip{font-size:10px;padding:2px 7px;border-radius:999px;background:var(--bg-soft,#eef2f7);color:var(--text-muted,#667);border:1px solid var(--border,#dde3ea)}
+    .mapeo-nota{font-size:11px;font-style:italic;color:var(--text-muted,#889)}
+    .mapeo-empty-art{padding:14px 0;font-size:12px;color:var(--text-muted,#889)}
+    .mapeo-body-foot{display:flex;gap:6px;flex-wrap:wrap;padding-top:12px}
+  </style>
+</div>
+
 <div class="sec" id="sec-hist-cargas">
   <div class="sec-head">
     <div class="sec-title">Historial de cargas</div>
@@ -1478,7 +1517,7 @@
     ['incong',[['incong-stock','Stock'],['incong-drops','Caídas de stock'],['incong-talles','Guía de talles'],['incong-desc','Descripción'],['incong-sku','SKU']]],
     ['edicion',[['edicion','Editor masivo'],['publicaciones','SWAP']]],
     ['precios',[['precios','Lista de precios'],['matrices','Matrices'],['costos','Costos'],['maestro','Maestro']]],
-    ['operaciones',[['orders','Cargar órdenes'],['hist-cargas','Historial cargas'],['historial','Historial despachos'],['__scanner','Scanner despacho ↗']]],
+    ['operaciones',[['orders','Cargar órdenes'],['mapeo','Mapeo'],['hist-cargas','Historial cargas'],['historial','Historial despachos'],['__scanner','Scanner despacho ↗']]],
     ['sistema',[['platforms','Plataformas']]]
   ];
   var lastTab={};
