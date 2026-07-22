@@ -36,7 +36,7 @@ function newReport(){
   // badges
   document.getElementById('xl-result-state').style.display  = 'none';
   document.getElementById('xl-files-list').innerHTML = '';
-  document.getElementById('xl-tbody').innerHTML = '';
+  { const _tb=document.getElementById('xl-tbody'); if(_tb) _tb.innerHTML=''; }
   document.getElementById('xl-search').value = '';
   // Reset stats
   ['xlsum-n','xlsum-u','xlsum-sku','xlsum-flex','xlsum-colecta','xlsum-correo'].forEach(id=>{

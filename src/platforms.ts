@@ -315,7 +315,8 @@ function renderXLTable(){
   const u = document.getElementById('xlsum-u'); if(u) u.textContent = totalUnits;
   const s = document.getElementById('xlsum-sku'); if(s) s.textContent = totalSkus;
 
-  document.getElementById('xl-tbody').innerHTML = rows.map(r=>`<tr>
+  const _tb = document.getElementById('xl-tbody');
+  if(_tb) _tb.innerHTML = rows.map(r=>`<tr>
     <td><span class="sku-cell">${r.sku}</span></td>
     <td style="font-size:12px;color:var(--text-soft)">${r.color}</td>
     <td style="font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;color:var(--accent)">${r.talle}</td>
