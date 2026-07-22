@@ -15,6 +15,7 @@ export function nav(id,btn){
   if(id==='costos')  { setTimeout(function(){ try{ window.costosModeloRender?.(); }catch(e){ console.error('costosRender error:',e); } },50); }
   if(id==='maestro') { setTimeout(function(){ try{ window.maestroLoad?.(); }catch(e){ console.error('maestroLoad error:',e); } },50); }
   if(id==='radar')   { setTimeout(function(){ try{ window.radarLoad?.(); }catch(e){ console.error('radarLoad error:',e); } },50); }
+  if(id==='mapeo')   { setTimeout(function(){ try{ window.mapeoRender?.(); }catch(e){ console.error('mapeoRender error:',e); } },50); }
   if(id==='historial')window.filterHist?.();
   if(id==='hist-cargas') window.renderHCargas?.();
   if(id==='despachos')window.renderDespachos?.();

@@ -27,6 +27,7 @@ import './publicaciones'
 import './radar'   // Fase 3: sección Radar (extraída de publicaciones.ts); su window-expose debe correr o nav('radar') muere en silencio
 import './sales-ml'
 import { closeModal } from './sales-ml'
+import './mapeo'
 import './nav'
 import { nav } from './nav'
 import './core-state'

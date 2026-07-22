@@ -4,6 +4,7 @@
 import { S } from './state'
 import { parseVariant, skuBase, skuSortKey, vmlBaseCode } from './util'
 import { colorOfSku } from './colors'
+import { sectorForArticle, mapeoSectorOrder } from './mapeo'
 import { makeSkuModelResolver, nrm, dash } from './sku-resolver'
 import { apiGet } from './api'
 import { getWarehouse } from './warehouse-cache'
@@ -34,6 +35,8 @@ export function exportXLImportado(){
   }
 
   const rows = Object.values(grouped).sort((a,b)=>skuSortKey(a.sku).localeCompare(skuSortKey(b.sku)));
+  // Sector de depósito por artículo (mapeo por modelo + color). '' si no matchea.
+  for(const r of rows){ r.sector = sectorForArticle(r.sku, r.base, r.color) || ''; }
   const baseGroups = {};
   for(const r of rows){ if(!baseGroups[r.base]) baseGroups[r.base]=[]; baseGroups[r.base].push(r); }
   const bases = Object.keys(baseGroups).sort((a,b)=>skuSortKey(a).localeCompare(skuSortKey(b)));
@@ -87,8 +90,8 @@ export function exportXLImportado(){
   const ws={};
   let R=0;
   const SC=(col,row,cell)=>{ ws[XLSX.utils.encode_cell({r:row,c:col})]=cell; };
-  // 6 columns: A=SKU, B=Talle, C=Unidades, D=IDs, E=Flex, F=Colecta
-  const COLS=6;
+  // 7 columns: A=SKU, B=Talle, C=Unidades, D=IDs, E=Flex, F=Colecta, G=Sector
+  const COLS=7;
 
   // -- Fila 0: título -------------------------------------------
   for(let col=0;col<COLS;col++) SC(col,R,c('',G,'',11,false));
@@ -112,16 +115,16 @@ export function exportXLImportado(){
   const sBgs   =[WH,           WH,                BLL,       AML];
   const sFgs   =[G2,           BK,                BL,        AM];
   for(let col=0;col<4;col++) SC(col,R,c(sLabels[col],sBgs[col],sFgs[col],9,true,'center'));
-  SC(4,R,c('',WH)); SC(5,R,c('',WH)); R++;
+  SC(4,R,c('',WH)); SC(5,R,c('',WH)); SC(6,R,c('',WH)); R++;
   for(let col=0;col<4;col++) SC(col,R,c(sVals[col],sBgs[col],sFgs[col],18,true,'center'));
-  SC(4,R,c('',WH)); SC(5,R,c('',WH)); R++;
+  SC(4,R,c('',WH)); SC(5,R,c('',WH)); SC(6,R,c('',WH)); R++;
 
   // Fila vacía
   for(let col=0;col<COLS;col++) SC(col,R,c('',WH));  R++;
 
   // Headers columna
-  const hLabels=['SKU ARTÍCULO','TALLE','UNIDADES VENDIDAS','NRÚ DE VENTA / IDs','🚚 FLEX','📦 COLECTA'];
-  const hAligns=['left','center','center','left','center','center'];
+  const hLabels=['SKU ARTÍCULO','TALLE','UNIDADES VENDIDAS','NRÚ DE VENTA / IDs','🚚 FLEX','📦 COLECTA','📍 SECTOR'];
+  const hAligns=['left','center','center','left','center','center','center'];
   for(let col=0;col<COLS;col++) SC(col,R,c(hLabels[col],G2,GL,10,true,hAligns[col]));
   R++;
 
@@ -150,6 +153,7 @@ export function exportXLImportado(){
         SC(3,R,c(it.orderId,'FFF8F5','8B6914',9));
         SC(4,R,c(cr==='flex'?it.qty:'--',cr==='flex'?BLL:WH,cr==='flex'?BL:'C0C0C0',11,cr==='flex','center'));
         SC(5,R,c(cr==='colecta'?it.qty:'--',cr==='colecta'?AML:WH,cr==='colecta'?AM:'C0C0C0',11,cr==='colecta','center'));
+        SC(6,R,c(sectorForArticle(it.sku, skuBase(it.sku), color)||'--','FFF8F5','915000',10,false,'center'));
         R++;
       }
     }
@@ -163,33 +167,66 @@ export function exportXLImportado(){
   ws['!merges'].push({s:{r:R,c:0},e:{r:R,c:COLS-1}});
   R++;
 
-  for(const base of bases){
-    const items    = baseGroups[base];
-    const bTotal   = items.reduce((s,i)=>s+i.qty,0);
-    const bFlex    = items.reduce((s,i)=>s+i.flex,0);
-    const bColecta = items.reduce((s,i)=>s+i.colecta,0);
+  // -- Agrupar por SECTOR de depósito ---------------------------
+  const SB = '11351F'; // banner de sector (verde muy oscuro)
+  const bySector = {};
+  for(const r of rows){ const sec=r.sector||'Sin sector'; (bySector[sec]=bySector[sec]||[]).push(r); }
+  const order = mapeoSectorOrder();
+  const secList = Object.keys(bySector).sort((a,b)=>{
+    if(a==='Sin sector') return 1; if(b==='Sin sector') return -1;
+    const ia=order.indexOf(a), ib=order.indexOf(b);
+    if(ia<0 && ib<0) return a.localeCompare(b);
+    if(ia<0) return 1; if(ib<0) return -1;
+    return ia-ib;
+  });
 
-    // Base header
-    for(let col=0;col<COLS;col++) SC(col,R,c('',G2,GL,11));
-    SC(0,R,c('- '+base,G2,GL,11,true));
-    SC(2,R,c(bTotal,G2,GL,13,true,'center'));
-    SC(3,R,c('total: '+bTotal+' unid.',G2,GH,9,false,'right',false,true));
-    SC(4,R,c(bFlex||'',G2,GL,11,true,'center'));
-    SC(5,R,c(bColecta||'',G2,GL,11,true,'center'));
+  for(const sec of secList){
+    const secRows  = bySector[sec];
+    const secTotal = secRows.reduce((s,i)=>s+i.qty,0);
+
+    // Banner de sector (toda la fila)
+    for(let col=0;col<COLS;col++) SC(col,R,c('',SB,GL,12));
+    SC(0,R,c('📍 '+sec, SB, GL, 12, true,'left'));
+    SC(2,R,c(secTotal, SB, GL, 12, true,'center'));
+    SC(3,R,c(secRows.length+' SKUs', SB, GH, 9, false,'right',false,true));
+    SC(COLS-1,R,c(sec, SB, GL, 10, true,'center'));
     R++;
 
-    // SKU rows
-    for(let i=0;i<items.length;i++){
-      const item = items[i];
-      const bg   = i%2===0 ? GR : GR2;
-      const idsStr = item.ids.join('  ');
-      SC(0,R,c('  '+item.sku, bg, G2, 11,true));
-      SC(1,R,c(item.talle,    bg, G2, 11,true,'center'));
-      SC(2,R,c(item.qty,      bg, BK, 13,true,'center'));
-      SC(3,R,c(idsStr,        bg,'5A7A5A',9,false,'left',true));
-      SC(4,R,c(item.flex   ? item.flex   :'--', item.flex   ?BLL:bg, item.flex   ?BL:'BBBBBB',11,!!item.flex,   'center'));
-      SC(5,R,c(item.colecta? item.colecta:'--', item.colecta?AML:bg, item.colecta?AM:'BBBBBB',11,!!item.colecta,'center'));
+    // Sub-grupos por base dentro del sector
+    const bg2 = {};
+    for(const r of secRows){ (bg2[r.base]=bg2[r.base]||[]).push(r); }
+    const basesIn = Object.keys(bg2).sort((a,b)=>skuSortKey(a).localeCompare(skuSortKey(b)));
+
+    for(const base of basesIn){
+      const items    = bg2[base];
+      const bTotal   = items.reduce((s,i)=>s+i.qty,0);
+      const bFlex    = items.reduce((s,i)=>s+i.flex,0);
+      const bColecta = items.reduce((s,i)=>s+i.colecta,0);
+
+      // Base header
+      for(let col=0;col<COLS;col++) SC(col,R,c('',G2,GL,11));
+      SC(0,R,c('- '+base,G2,GL,11,true));
+      SC(2,R,c(bTotal,G2,GL,13,true,'center'));
+      SC(3,R,c('total: '+bTotal+' unid.',G2,GH,9,false,'right',false,true));
+      SC(4,R,c(bFlex||'',G2,GL,11,true,'center'));
+      SC(5,R,c(bColecta||'',G2,GL,11,true,'center'));
+      SC(6,R,c('',G2,GL,11));
       R++;
+
+      // SKU rows
+      for(let i=0;i<items.length;i++){
+        const item = items[i];
+        const bg   = i%2===0 ? GR : GR2;
+        const idsStr = item.ids.join('  ');
+        SC(0,R,c('  '+item.sku, bg, G2, 11,true));
+        SC(1,R,c(item.talle,    bg, G2, 11,true,'center'));
+        SC(2,R,c(item.qty,      bg, BK, 13,true,'center'));
+        SC(3,R,c(idsStr,        bg,'5A7A5A',9,false,'left',true));
+        SC(4,R,c(item.flex   ? item.flex   :'--', item.flex   ?BLL:bg, item.flex   ?BL:'BBBBBB',11,!!item.flex,   'center'));
+        SC(5,R,c(item.colecta? item.colecta:'--', item.colecta?AML:bg, item.colecta?AM:'BBBBBB',11,!!item.colecta,'center'));
+        SC(6,R,c(item.sector||'--', bg, item.sector?'2D5A3D':'BBBBBB',10,!!item.sector,'center'));
+        R++;
+      }
     }
   }
 
@@ -200,7 +237,7 @@ export function exportXLImportado(){
 
   // -- Sheet setup ----------------------------------------------
   ws['!ref']  = XLSX.utils.encode_range({s:{r:0,c:0},e:{r:R-1,c:COLS-1}});
-  ws['!cols'] = [{wch:28},{wch:7},{wch:18},{wch:44},{wch:8},{wch:9}];
+  ws['!cols'] = [{wch:28},{wch:7},{wch:18},{wch:44},{wch:8},{wch:9},{wch:14}];
   ws['!rows'] = Array.from({length:R},(_,i)=>{
     if(i===0||i===1) return {hpt:20};
     if(i===4)        return {hpt:26};
