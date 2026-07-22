@@ -57,6 +57,10 @@
     <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
     Operaciones
   </button>
+  <button class="nav-item" data-group="inventario" onclick="navGroup('inventario',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 8V21H3V8M1 3h22v5H1zM10 12h4"/></svg>
+    Inventario
+  </button>
   <div class="nav-div"></div>
   <button class="nav-item" data-group="sistema" onclick="navGroup('sistema',this)">
     <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
@@ -591,6 +595,18 @@
 </div>
 
 <!-- HISTORIAL CARGAS -->
+<!-- INVENTARIO (app embebida: public/inventario) -->
+<div class="sec" id="sec-inventario">
+  <div class="sec-head">
+    <div class="sec-title">Inventario — Conteo y stock</div>
+    <div class="sec-sub">Conteo por artículo → color → talle sobre el catálogo completo, con stock consolidado y carga a Google Drive. <a href="inventario/index.html" target="_blank" rel="noopener" style="color:var(--accent)">Abrir en pestaña nueva ↗</a></div>
+  </div>
+  <div class="sec-body" style="padding-top:0">
+    <iframe id="inv-frame" title="Inventario" data-src="inventario/index.html"
+      style="width:100%;height:82vh;border:1px solid var(--border);border-radius:12px;background:#fff"></iframe>
+  </div>
+</div>
+
 <!-- MAPEO -->
 <div class="sec" id="sec-mapeo">
   <div class="sec-head">
@@ -1501,6 +1517,7 @@
     ['edicion',[['edicion','Editor masivo'],['publicaciones','SWAP']]],
     ['precios',[['precios','Lista de precios'],['matrices','Matrices'],['costos','Costos'],['maestro','Maestro']]],
     ['operaciones',[['orders','Cargar órdenes'],['mapeo','Mapeo'],['hist-cargas','Historial cargas'],['historial','Historial despachos'],['__scanner','Scanner despacho ↗']]],
+    ['inventario',[['inventario','Conteo de stock']]],
     ['sistema',[['platforms','Plataformas']]]
   ];
   var lastTab={};
