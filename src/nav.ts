@@ -16,6 +16,7 @@ export function nav(id,btn){
   if(id==='maestro') { setTimeout(function(){ try{ window.maestroLoad?.(); }catch(e){ console.error('maestroLoad error:',e); } },50); }
   if(id==='radar')   { setTimeout(function(){ try{ window.radarLoad?.(); }catch(e){ console.error('radarLoad error:',e); } },50); }
   if(id==='mapeo')   { setTimeout(function(){ try{ window.mapeoRender?.(); }catch(e){ console.error('mapeoRender error:',e); } },50); }
+  if(id==='inventario'){ try{ var f=document.getElementById('inv-frame'); if(f && !f.getAttribute('src') && f.getAttribute('data-src')) f.setAttribute('src', f.getAttribute('data-src')); }catch(e){ console.error('inv-frame error:',e); } }
   if(id==='historial')window.filterHist?.();
   if(id==='hist-cargas') window.renderHCargas?.();
   if(id==='despachos')window.renderDespachos?.();
