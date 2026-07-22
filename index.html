@@ -86,7 +86,7 @@
 
       <!-- Card ML -->
       <div class="card" style="margin-bottom:0">
-        <div class="card-head" style="background:linear-gradient(135deg,#4F46E5,#6366F1)">
+        <div class="card-head" style="background:linear-gradient(135deg,#2F9E6E,#34B07C)">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:18px">📊</span>
             <div>
@@ -595,29 +595,19 @@
 </div>
 
 <!-- HISTORIAL CARGAS -->
-<!-- INVENTARIO (app embebida: public/inventario) -->
+<!-- INVENTARIO (app en public/inventario, se abre en pestaña) -->
 <div class="sec" id="sec-inventario">
   <div class="sec-head">
     <div class="sec-title">Inventario — Conteo y stock</div>
-    <div class="sec-sub">El conteo se hace desde el celular. Escaneá el QR o abrí el link en el teléfono; acá abajo lo tenés embebido para revisar.</div>
+    <div class="sec-sub">El conteo se hace desde el celular: artículo → color → talle, con stock consolidado y carga a Google Drive.</div>
   </div>
-  <div class="sec-body" style="padding-top:0">
-    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
-      <!-- Tarjeta QR: contar desde el celular -->
-      <div class="card" style="flex:0 0 260px;max-width:260px;text-align:center;padding:18px">
-        <div style="font-weight:700;font-size:14px;margin-bottom:2px">📱 Contá desde el celular</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Escaneá con la cámara del teléfono</div>
-        <img alt="QR Inventario" width="200" height="200" style="width:200px;height:200px;border:1px solid var(--border);border-radius:12px;background:#fff" src="data:image/png;base64,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">
-        <a class="btn btn-primary btn-sm" href="inventario/index.html" target="_blank" rel="noopener" style="margin-top:12px;width:100%;justify-content:center">Abrir en pestaña nueva ↗</a>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:8px;word-break:break-all">digital1vengil.github.io/magontexMLhub/inventario/</div>
-      </div>
-      <!-- Vista embebida en marco tipo teléfono -->
-      <div style="flex:1 1 320px;display:flex;justify-content:center">
-        <div style="width:100%;max-width:420px;border:8px solid #111827;border-radius:28px;overflow:hidden;background:#111827;box-shadow:0 12px 40px rgba(0,0,0,.18)">
-          <iframe id="inv-frame" title="Inventario" data-src="inventario/index.html"
-            style="width:100%;height:80vh;border:0;background:#fff;display:block"></iframe>
-        </div>
-      </div>
+  <div class="sec-body">
+    <div class="card" style="max-width:520px;text-align:center;padding:28px 22px">
+      <div style="font-size:34px;line-height:1;margin-bottom:10px">📦</div>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">Inventario · Conteo y Stock</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:18px">258 artículos · 3437 SKUs · multiusuario</div>
+      <a class="btn btn-primary" href="inventario/index.html" target="_blank" rel="noopener" style="justify-content:center;padding:12px 20px;font-size:14px">Abrir inventario ↗</a>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:12px">Se abre en una pestaña nueva (ideal para el celular).</div>
     </div>
   </div>
 </div>
