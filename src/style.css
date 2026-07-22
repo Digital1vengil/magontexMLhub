@@ -18,14 +18,14 @@
   --text-muted:#64748B;
 
   /* ── Indigo (marca) ── */
-  --accent:#4F46E5;
-  --accent2:#6366F1;
-  --accent-ink:#1E1B4B;      /* indigo profundo: header, thead-dark, énfasis */
-  --accent-light:rgba(79,70,229,0.10);
-  --accent-dim:rgba(79,70,229,0.05);
+  --accent:#2F9E6E;
+  --accent2:#34B07C;
+  --accent-ink:#14532D;      /* indigo profundo: header, thead-dark, énfasis */
+  --accent-light:rgba(47,158,110,0.10);
+  --accent-dim:rgba(47,158,110,0.05);
 
   /* ── Teal legacy — apunta al indigo para matar el bicolor ── */
-  --teal:#4F46E5;
+  --teal:#2F9E6E;
   --teal-bg:#E0E7FF;
   --teal-border:#C7D2FE;
 
@@ -35,9 +35,9 @@
   --blue-border:#93C5FD;
 
   /* ── Gradiente sutil de marca ── */
-  --grad-a:#4F46E5;
-  --grad-b:#4F46E5;
-  --grad-c:#6366F1;
+  --grad-a:#2F9E6E;
+  --grad-b:#2F9E6E;
+  --grad-c:#34B07C;
 
   /* ── Semantic ── */
   --green:#059669;--green-bg:#D1FAE5;--green-border:#A7F3D0;
@@ -45,7 +45,7 @@
   --orange:#D97706;--orange-bg:#FEF3C7;
   --signal:#EA580C;          /* naranja señal (advertencias, atención) */
   --ml-text:#854D0E;--ml-bg:#FEF9C3;--ml-border:#FDE68A;
-  --tn:#3730A3;--tn-bg:#E0E7FF;--tn-border:#C7D2FE;
+  --tn:#1F6B47;--tn-bg:#E0E7FF;--tn-border:#C7D2FE;
 
   /* ── Type ── */
   --font-body:'Inter',system-ui,sans-serif;
@@ -122,7 +122,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .field{display:flex;flex-direction:column;gap:4px}
 .field label{font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:.07em}
 .field input,.field select,.field textarea{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .15s,box-shadow .15s;width:100%}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,158,110,.12)}
 .field input::placeholder,.field textarea::placeholder{color:var(--text-muted)}
 .field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%239CA3AF' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;cursor:pointer}
 .field textarea{resize:vertical;min-height:72px}
@@ -194,7 +194,7 @@ tbody td{padding:10px 14px;vertical-align:middle}
 .plat-logo.ml{background:#FFD800;color:#000}
 .plat-logo.tn{background:var(--tn);color:#fff}
 .plat-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px}
-.info-box{background:var(--accent-dim);border:1px solid rgba(79,70,229,.18);border-radius:6px;padding:10px 13px;font-size:12px;color:#3730A3;line-height:1.6}
+.info-box{background:var(--accent-dim);border:1px solid rgba(47,158,110,.18);border-radius:6px;padding:10px 13px;font-size:12px;color:#1F6B47;line-height:1.6}
 .info-box strong{font-weight:600}
 /* Puntito "EN VIVO" reutilizable (indicador de frescura de datos por sección). Ver src/live.ts. */
 .live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--text-muted);vertical-align:middle;margin-right:6px;cursor:pointer;transition:background .2s;flex:none}
@@ -246,8 +246,8 @@ input, select, textarea{color-scheme:light}
 .srch{background:var(--surface2);border-color:var(--border)}
 .srch input{color:var(--text)}
 .field input,.field select,.field textarea{background:var(--surface2);border-color:var(--border);color:var(--text)}
-.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,.15)}
-.info-box{background:var(--accent-light);border-color:rgba(79,70,229,.25);color:#3730A3}
+.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,158,110,.15)}
+.info-box{background:var(--accent-light);border-color:rgba(47,158,110,.25);color:#1F6B47}
 /* Cards con sombra verde suave */
 .card{box-shadow:var(--shadow-card)}
 
@@ -412,7 +412,7 @@ input, select, textarea{color-scheme:light}
 .scanner-body{padding:18px;display:flex;flex-direction:column;gap:14px}
 .scan-input-wrap{display:flex;gap:10px;align-items:center}
 .scan-input{flex:1;background:var(--surface2);border:2px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;letter-spacing:.04em;outline:none;transition:border-color .15s}
-.scan-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+.scan-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,158,110,.12)}
 .scan-input::placeholder{color:var(--text-muted);font-size:13px;font-weight:400;letter-spacing:0}
 .scan-log{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
 .scan-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);animation:scanIn .2s ease}
@@ -451,7 +451,7 @@ input, select, textarea{color-scheme:light}
   /* Aliases del dashboard legacy → remapeados al sistema de tokens de arriba.
      OJO: este bloque NO debe redefinir --bg ni --r (pisaba los de toda la app). */
   --g50:#EEF2FF;--g100:#E0E7FF;--g200:#C7D2FE;--g300:#A5B4FC;--g400:#818CF8;
-  --g600:#4F46E5;--g700:#4338CA;--g800:#3730A3;--g900:#1E1B4B;
+  --g600:#2F9E6E;--g700:#268A5E;--g800:#1F6B47;--g900:#14532D;
   --am:#D97706;--ams:#FEF3C7;--rd:#DC2626;--rds:#FEE2E2;--sk:#0284c7;
   --ink:#0F172A;--im:#3F4C63;--is:#64748B;--if:#94A3B8;
   --sf:#fff;--sf2:#F8FAFD;--bd:#EEF2F8;
@@ -480,8 +480,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-s
 .cb-badge.off{background:rgba(220,38,38,.2);color:#fca5a5;border-color:rgba(220,38,38,.3)}
 .cb-badge.on{background:rgba(34,197,94,.15);color:#86efac;border-color:rgba(34,197,94,.25)}
 .cb-badge svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.btn-primary{display:inline-flex;align-items:center;gap:6px;background:var(--g600);color:#fff;border:none;border-radius:var(--r);padding:8px 16px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;box-shadow:0 2px 8px rgba(79,70,229,.35)}
-.btn-primary:hover{background:var(--g700);box-shadow:0 4px 12px rgba(79,70,229,.45);transform:translateY(-1px)}
+.btn-primary{display:inline-flex;align-items:center;gap:6px;background:var(--g600);color:#fff;border:none;border-radius:var(--r);padding:8px 16px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;box-shadow:0 2px 8px rgba(47,158,110,.35)}
+.btn-primary:hover{background:var(--g700);box-shadow:0 4px 12px rgba(47,158,110,.45);transform:translateY(-1px)}
 .btn-primary:active{transform:translateY(0)}
 .btn-primary svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .btn-secondary{display:inline-flex;align-items:center;gap:6px;background:transparent;color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.25);border-radius:var(--r);padding:7px 14px;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
@@ -545,7 +545,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-s
 .srch{position:relative;flex:1;max-width:240px}
 .srch svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:12px;height:12px;stroke:var(--if);fill:none;stroke-width:1.8;pointer-events:none}
 .srch input{width:100%;padding:7px 10px 7px 27px;border:1.5px solid var(--bd);border-radius:9px;font-family:inherit;font-size:12px;background:var(--sf);color:var(--ink);outline:none}
-.srch input:focus{border-color:var(--g600);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+.srch input:focus{border-color:var(--g600);box-shadow:0 0 0 3px rgba(47,158,110,.12)}
 .badge{font-size:11px;color:var(--is);background:var(--sf2);padding:4px 11px;border-radius:20px;border:1px solid var(--bd)}
 .tbl-wrap{background:var(--sf);border-radius:16px;border:1px solid var(--bd);overflow:hidden;flex:1;display:flex;flex-direction:column;min-height:0}
 .tbl-scroll{overflow-x:auto;overflow-y:auto;flex:1;min-height:0;max-height:none}
@@ -663,7 +663,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-s
 .vml-search-wrap{position:relative;flex:1;min-width:200px;max-width:280px}
 .vml-search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;stroke:var(--if);fill:none;stroke-width:1.8;pointer-events:none}
 .vml-search-wrap input{width:100%;padding:7px 10px 7px 28px;border:1.5px solid var(--bd);border-radius:9px;font-family:inherit;font-size:12px;background:var(--sf2);color:var(--ink);outline:none;transition:all .15s}
-.vml-search-wrap input:focus{border-color:var(--g600);background:var(--sf);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+.vml-search-wrap input:focus{border-color:var(--g600);background:var(--sf);box-shadow:0 0 0 3px rgba(47,158,110,.12)}
 .vml-week-wrap{display:flex;align-items:center;gap:7px}
 .vml-label{font-size:11px;font-weight:600;color:var(--is);white-space:nowrap}
 .vml-week-wrap select{padding:7px 10px;border:1.5px solid var(--bd);border-radius:9px;font-family:inherit;font-size:12px;background:var(--sf);color:var(--ink);outline:none;cursor:pointer;min-width:160px}
@@ -694,9 +694,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-s
 .sku-talle-badge{display:inline-block;background:var(--g800);color:#fff;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700}
 .sku-row.hidden{display:none}
 .sku-row:hover td{background:var(--g50)}
-.week-highlight{background:rgba(79,70,229,.12) !important;font-weight:700 !important;color:var(--g800) !important}
+.week-highlight{background:rgba(47,158,110,.12) !important;font-weight:700 !important;color:var(--g800) !important}
 .zero-week{color:var(--if) !important}
-.col-week-sel{background:#1E1B4B !important;border-left:2px solid var(--g400) !important;border-right:2px solid var(--g400) !important}
+.col-week-sel{background:#14532D !important;border-left:2px solid var(--g400) !important;border-right:2px solid var(--g400) !important}
 
 
 /* ── Ajustes finales (post-tokens) ── */
@@ -724,3 +724,15 @@ tbody tr:hover{background:var(--surface2)}
 .subtabs{display:flex;gap:2px;background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px;flex-shrink:0;overflow-x:auto}
 .main .sec.active{flex:1;min-height:0;height:auto}
 @media(max-width:768px){.subtabs{padding:0 8px}.subtabs .otab{padding:10px 12px;font-size:12px;white-space:nowrap}}
+
+/* --- FIX OVERFLOW HORIZONTAL EN MOBILE (ajuste de formato para el celular) --- */
+@media (max-width:768px){
+  html,body{overflow-x:hidden;max-width:100vw}
+  .app{overflow-x:hidden}
+  .main{min-width:0;max-width:100vw;overflow-x:hidden}
+  .sec,.sec-head,.sec-body{min-width:0;max-width:100%}
+  .sec-body{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .card{min-width:0;max-width:100%}
+  .subtabs{-webkit-overflow-scrolling:touch}
+  .card-head{max-width:100%}
+}
