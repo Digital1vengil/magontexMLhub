@@ -172,12 +172,14 @@ export function exportXLImportado(){
   const bySector = {};
   for(const r of rows){ const sec=r.sector||'Sin sector'; (bySector[sec]=bySector[sec]||[]).push(r); }
   const order = mapeoSectorOrder();
+  const firstTok = s => s==='Sin sector' ? '' : String(s).split(' / ')[0];  // ordenar combos por su 1er sector
   const secList = Object.keys(bySector).sort((a,b)=>{
     if(a==='Sin sector') return 1; if(b==='Sin sector') return -1;
-    const ia=order.indexOf(a), ib=order.indexOf(b);
+    const ia=order.indexOf(firstTok(a)), ib=order.indexOf(firstTok(b));
     if(ia<0 && ib<0) return a.localeCompare(b);
     if(ia<0) return 1; if(ib<0) return -1;
-    return ia-ib;
+    if(ia!==ib) return ia-ib;
+    return a.localeCompare(b);
   });
 
   for(const sec of secList){

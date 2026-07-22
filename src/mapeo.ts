@@ -41,29 +41,36 @@ function parseCode(s){
   return m ? { pfx: m[1] || '', num: m[2] } : null
 }
 
-// sku/base + color de la venta → nombre de sector ('' si no matchea).
+// sku/base + color de la venta → sector(es) donde está el artículo ('' si no matchea).
 // Matchea por NÚMERO de modelo. El prefijo del mapeo (W8, M114) debe coincidir si está;
 // si el mapeo no trae prefijo (1155, 2067) matchea cualquier prefijo del SKU.
-// Puntaje: color exacto (100) > color comodín/sin colores (10) > número sin color (1);
-// +1 si el prefijo es explícito (para preferir "M114" ante "114" en empate).
+// El color prioriza (W8 negro→Sector 1, chocolate→Sector 3), PERO si el mismo modelo+color
+// figura en varios sectores, se devuelven TODOS separados por " / " (ej. "Sector 9 / Sector 11").
+// Los artículos cargados sin colores (comodín) aplican a cualquier color y se suman.
 export function sectorForArticle(sku, base, color){
   const oc = parseCode(base || sku)
   if(!oc) return ''
   const col = canonColor(color || '')
-  let best = '', bestScore = 0
+  const push = (arr, s) => { if(!arr.includes(s)) arr.push(s) }
+  const colorHits = []   // sectores donde el color coincide
+  const wilds = []       // sectores donde el modelo está sin colores (aplica a cualquiera)
+  const anyModel = []    // todos los sectores del modelo (fallback)
   for(const sec of MAPEO){
     for(const a of (sec.articulos||[])){
       const mc = parseCode(a.modelo)
       if(!mc || mc.num !== oc.num) continue
       if(mc.pfx && mc.pfx !== oc.pfx) continue
+      push(anyModel, sec.sector)
       const cols = a.colores || []
-      const colorMatch = cols.length && col && cols.some(c=>canonColor(c) === col)
-      let score = colorMatch ? 100 : (cols.length ? 1 : 10)
-      score += (mc.pfx ? 1 : 0)
-      if(score > bestScore){ bestScore = score; best = sec.sector }
+      if(!cols.length){ push(wilds, sec.sector); continue }
+      if(col && cols.some(c=>canonColor(c) === col)) push(colorHits, sec.sector)
     }
   }
-  return best
+  // color coincidente + comodines; si nada coincidió por color, mostrar todos los del modelo
+  let out = colorHits.slice()
+  for(const w of wilds) push(out, w)
+  if(!out.length) out = anyModel
+  return out.join(' / ')
 }
 
 // Orden de sectores para el reporte (según el orden actual del mapeo).
