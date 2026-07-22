@@ -32,31 +32,38 @@ function save(){
 }
 
 // --- MATCHER (para el reporte) -----------------------------------------
-// Token de código: primeras letras + primer número (ignora guiones/espacios).
-//  "W-8-BLK" → "W8" · "M-114-BLACK" → "M114" · "109-BLK" → "109" · "MT 1002" → "MT1002"
-function codeToken(s){
+// Código = prefijo de letras + número. El SKU de ML siempre trae prefijo
+// ("M-1155-BLACK" → {pfx:'M', num:'1155'}); el mapeo a veces NO ("1155" → {pfx:'', num:'1155'}).
+//  "W-8-BLK" → {W,8} · "M-114-BLACK" → {M,114} · "109-BLK" → {,109} · "MT 1002" → {MT,1002}
+function parseCode(s){
   const u = String(s||'').toUpperCase().replace(/[\s.]/g,'')
   const m = u.match(/^([A-Z]{0,3})-?(\d{1,4})/)
-  return m ? (m[1]||'') + m[2] : ''
+  return m ? { pfx: m[1] || '', num: m[2] } : null
 }
 
 // sku/base + color de la venta → nombre de sector ('' si no matchea).
-// Prioriza modelo+color; si el color no coincide en ningún sector, cae al modelo.
+// Matchea por NÚMERO de modelo. El prefijo del mapeo (W8, M114) debe coincidir si está;
+// si el mapeo no trae prefijo (1155, 2067) matchea cualquier prefijo del SKU.
+// Puntaje: color exacto (100) > color comodín/sin colores (10) > número sin color (1);
+// +1 si el prefijo es explícito (para preferir "M114" ante "114" en empate).
 export function sectorForArticle(sku, base, color){
-  const om = codeToken(base || sku)
-  if(!om) return ''
-  const oc = canonColor(color || '')
-  let byColor = '', byWild = '', byModel = ''
+  const oc = parseCode(base || sku)
+  if(!oc) return ''
+  const col = canonColor(color || '')
+  let best = '', bestScore = 0
   for(const sec of MAPEO){
     for(const a of (sec.articulos||[])){
-      if(codeToken(a.modelo) !== om) continue
-      if(!byModel) byModel = sec.sector
+      const mc = parseCode(a.modelo)
+      if(!mc || mc.num !== oc.num) continue
+      if(mc.pfx && mc.pfx !== oc.pfx) continue
       const cols = a.colores || []
-      if(!cols.length){ if(!byWild) byWild = sec.sector; continue }
-      if(oc && cols.some(c=>canonColor(c) === oc)){ if(!byColor) byColor = sec.sector }
+      const colorMatch = cols.length && col && cols.some(c=>canonColor(c) === col)
+      let score = colorMatch ? 100 : (cols.length ? 1 : 10)
+      score += (mc.pfx ? 1 : 0)
+      if(score > bestScore){ bestScore = score; best = sec.sector }
     }
   }
-  return byColor || byWild || byModel || ''
+  return best
 }
 
 // Orden de sectores para el reporte (según el orden actual del mapeo).
