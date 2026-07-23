@@ -716,28 +716,18 @@
 <!-- INVENTARIO (app en public/inventario, se abre en pestaña) -->
 <div class="sec" id="sec-inventario">
   <div class="sec-head">
-    <div class="sec-title">Inventario — Conteo y stock</div>
-    <div class="sec-sub">El conteo se hace desde el celular: artículo → color → talle, con stock consolidado y carga a Google Drive.</div>
+    <div class="sec-title">Inventario y Devoluciones</div>
+    <div class="sec-sub">Apps para el celular. Conteo de stock (artículo → color → talle) y registro de devoluciones ML (falla / óptimo). Cada una guarda en su propia carpeta de Drive.</div>
   </div>
-  <div class="sec-body">
-    <div class="card" style="max-width:520px;text-align:center;padding:28px 22px">
+  <div class="sec-body" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+    <div class="card" style="flex:1 1 320px;max-width:480px;text-align:center;padding:28px 22px">
       <div style="font-size:34px;line-height:1;margin-bottom:10px">📦</div>
       <div style="font-weight:700;font-size:16px;margin-bottom:4px">Inventario · Conteo y Stock</div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:18px">258 artículos · 3437 SKUs · multiusuario</div>
       <a class="btn btn-primary" href="inventario/index.html" target="_blank" rel="noopener" style="justify-content:center;padding:12px 20px;font-size:14px">Abrir inventario ↗</a>
       <div style="font-size:11px;color:var(--text-muted);margin-top:12px">Se abre en una pestaña nueva (ideal para el celular).</div>
     </div>
-  </div>
-</div>
-
-<!-- DEVOLUCIONES ML (app en public/devoluciones, se abre en pestaña) -->
-<div class="sec" id="sec-devolml">
-  <div class="sec-head">
-    <div class="sec-title">Devoluciones ML</div>
-    <div class="sec-sub">Registro de devoluciones de Mercado Libre, independiente del inventario: buscá la prenda, marcá falla u óptimo. Se guarda en su propia carpeta de Drive (“devoluciones ML”).</div>
-  </div>
-  <div class="sec-body">
-    <div class="card" style="max-width:520px;text-align:center;padding:28px 22px">
+    <div class="card" style="flex:1 1 320px;max-width:480px;text-align:center;padding:28px 22px">
       <div style="font-size:34px;line-height:1;margin-bottom:10px">↩️</div>
       <div style="font-weight:700;font-size:16px;margin-bottom:4px">Devoluciones ML · Falla / Óptimo</div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:18px">App independiente · multiusuario · carpeta propia</div>
@@ -1657,7 +1647,7 @@
     ['edicion',[['edicion','Editor masivo'],['publicaciones','SWAP']]],
     ['precios',[['precios','Lista de precios'],['matrices','Matrices'],['costos','Costos'],['maestro','Maestro']]],
     ['operaciones',[['orders','Cargar órdenes'],['mapeo','Mapeo'],['hist-cargas','Historial cargas'],['historial','Historial despachos'],['__scanner','Scanner despacho ↗']]],
-    ['inventario',[['inventario','Conteo de stock'],['devolml','Devoluciones ML']]],
+    ['inventario',[['inventario','Conteo de stock']]],
     ['sistema',[['platforms','Plataformas'],['conexiones','Conexiones y Drive']]]
   ];
   var lastTab={};
