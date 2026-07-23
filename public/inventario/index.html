@@ -264,23 +264,26 @@
 
     <!-- RESUMEN -->
     <section class="view" id="v-resumen">
+      <div class="sec-title" style="margin-top:4px" id="resTitle">Mi historial</div>
       <div class="stats">
-        <div class="stat"><div class="n" id="stArt">0</div><div class="l">Artículos</div></div>
-        <div class="stat"><div class="n" id="stSku">0</div><div class="l">SKUs en catálogo</div></div>
-        <div class="stat"><div class="n" id="stCod">0</div><div class="l">Códigos con stock</div></div>
-        <div class="stat"><div class="n" id="stUni">0</div><div class="l">Unidades contadas</div></div>
+        <div class="stat"><div class="n" id="stSes">0</div><div class="l">Conteos</div></div>
+        <div class="stat"><div class="n" id="stVar">0</div><div class="l">Variantes</div></div>
+        <div class="stat"><div class="n" id="stUni">0</div><div class="l">Unidades</div></div>
+        <div class="stat"><div class="n" id="stCod">0</div><div class="l">Códigos</div></div>
       </div>
-      <div class="row-btns">
+      <div id="invProg"></div>
+      <div class="sec-title">Historial de conteos</div>
+      <div id="histBody"></div>
+      <div class="row-btns" style="margin-top:12px">
         <button class="btn btn-accent" id="btnExport">⬇️ Exportar Excel</button>
         <button class="btn btn-ghost" id="btnBackup">💾 Backup</button>
         <button class="btn btn-danger" id="btnClear">🗑️ Vaciar</button>
       </div>
-      <div class="sec-title">Stock contado en este dispositivo</div>
-      <div class="hint" style="margin:-4px 4px 8px">Esto es solo lo confirmado en <b>este</b> celular. El consolidado de <b>todas las personas</b> se ve en tu Drive (archivo “CONSOLIDADO Inventario”, hoja “Stock”).</div>
-      <div class="search" style="margin-bottom:10px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="fStock" placeholder="Filtrar stock…"></div>
-      <div class="tablewrap">
-        <table><thead><tr><th>Código</th><th>Descripción</th><th class="num">Stock</th></tr></thead><tbody id="stockBody"></tbody></table>
-      </div>
+      <details style="margin-top:14px">
+        <summary class="sec-title" style="cursor:pointer">Stock por código (este dispositivo)</summary>
+        <div class="search" style="margin:8px 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="fStock" placeholder="Filtrar stock…"></div>
+        <div class="tablewrap"><table><thead><tr><th>Código</th><th>Descripción</th><th class="num">Stock</th></tr></thead><tbody id="stockBody"></tbody></table></div>
+      </details>
       <input type="file" id="fileRestore" accept=".json" style="display:none">
     </section>
 
@@ -369,17 +372,21 @@
 var ARTS = window.ARTICULOS || [];
 var INV_DEFAULT_DRIVE_URL='https://script.google.com/macros/s/AKfycbz1u-9dowkdoAd-icmpAWFqzckJwYU9XxH7zTdBiulC0jn3IpNFj9PRQxDPMlIF2dUE/exec';
 var LS={f:'inv_fichas_v2',s:'inv_sess_v2',r:'inv_resp_v2',d:'inv_drive_v2',b:'inv_boxes_v2'};
-var fichas=load(LS.f,[]);              // historial confirmado
-var session=load(LS.s,{});            // conteo actual, por codigo (totales)
-var boxes=load(LS.b,[]);              // cajas: [{id,artId,articulo,rubro,resp,fecha,total,items:{codigo:{...}}}]
 var responsable=load(LS.r,'');
 var driveUrl=load(LS.d,INV_DEFAULT_DRIVE_URL);
+function nsKey(base){return base+'__'+((responsable||'default').toString().trim().toLowerCase());}
+function loadNS(base,def){return load(nsKey(base),def);}
+function saveNS(base,val){localStorage.setItem(nsKey(base),JSON.stringify(val));}
+(function(){if(localStorage.getItem('inv_ns_migrated'))return;try{if(responsable&&localStorage.getItem(nsKey(LS.f))===null&&localStorage.getItem(LS.f)!==null){['f','s','b'].forEach(function(k){var v=localStorage.getItem(LS[k]);if(v!==null)localStorage.setItem(nsKey(LS[k]),v);});var p=localStorage.getItem('inv_pick_v2');if(p!==null)localStorage.setItem(nsKey('inv_pick_v2'),p);}}catch(e){}localStorage.setItem('inv_ns_migrated','1');})();
+var fichas=loadNS(LS.f,[]);
+var session=loadNS(LS.s,{});
+var boxes=loadNS(LS.b,[]);
 var curArt=null;
 var expandedBox=null;   // caja con editor inline abierto
 
 var $=function(s,c){return (c||document).querySelector(s);};
 function load(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
-function saveAll(){localStorage.setItem(LS.f,JSON.stringify(fichas));localStorage.setItem(LS.s,JSON.stringify(session));localStorage.setItem(LS.b,JSON.stringify(boxes));}
+function saveAll(){saveNS(LS.f,fichas);saveNS(LS.s,session);saveNS(LS.b,boxes);}
 function boxesFor(artId){return boxes.filter(function(b){return b.artId===artId;});}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
@@ -392,8 +399,8 @@ var rubros=(function(){var s={};ARTS.forEach(function(a){if(a.rubro)s[a.rubro]=1
 var curRubro='';
 
 /* ================= CONTAR (selección + desplegable) ================= */
-var picked=load('inv_pick_v2',[]);   // ids de artículos elegidos para contar
-function savePick(){localStorage.setItem('inv_pick_v2',JSON.stringify(picked));}
+var picked=loadNS('inv_pick_v2',[]);   // ids de artículos elegidos para contar
+function savePick(){saveNS('inv_pick_v2',picked);}
 function isPicked(id){return picked.indexOf(id)>=0;}
 function artById(id){return ARTS.filter(function(x){return x.id===id;})[0];}
 function nTalles(a){return a.sizes.filter(function(s){return s!=='MADRE';}).length;}
@@ -720,15 +727,32 @@ function computeStock(){
   return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return a.codigo<b.codigo?-1:1;});
 }
 function renderResumen(){
-  $('#stArt').textContent=ARTS.length;
-  var sku=ARTS.reduce(function(s,a){return s+Object.keys(a.variants).length;},0);
-  $('#stSku').textContent=sku.toLocaleString('es-AR');
+  var rt=$('#resTitle'); if(rt) rt.textContent = responsable ? ('Historial de '+responsable) : 'Mi historial';
+  var sesMap={},order=[];
+  fichas.forEach(function(fh){ if(!sesMap[fh.sesion]){sesMap[fh.sesion]={sesion:fh.sesion,fecha:fh.fecha,items:[],unid:0};order.push(fh.sesion);} sesMap[fh.sesion].items.push(fh); sesMap[fh.sesion].unid+=fh.cantidad; });
+  var setT=function(id,v){var e=$('#'+id);if(e)e.textContent=v;};
+  setT('stSes',order.length);
+  setT('stVar',fichas.length);
+  setT('stUni',fichas.reduce(function(s,fh){return s+fh.cantidad;},0).toLocaleString('es-AR'));
+  var cods={};fichas.forEach(function(fh){cods[fh.codigo]=1;});setT('stCod',Object.keys(cods).length);
+  var prog=$('#invProg');
+  if(prog){var arr=sessArr();var pu=arr.reduce(function(s,x){return s+x.cantidad;},0);
+    prog.innerHTML=(arr.length||boxes.length)?('<div class="card" style="padding:12px;margin-bottom:12px;border-left:4px solid var(--brand)"><b>Contando ahora</b><div class="meta" style="font-size:12px;color:var(--muted)">'+arr.length+' variantes · '+pu+' unidades · '+boxes.length+' cajas — sin confirmar</div></div>'):'';}
+  var hb=$('#histBody');
+  if(hb){
+    if(!order.length){hb.innerHTML='<div class="empty" style="padding:16px 4px;color:var(--muted)">Todavía no confirmaste ningún conteo.</div>';}
+    else{
+      hb.innerHTML=order.map(function(sid){var G=sesMap[sid];
+        var items=G.items.slice().sort(function(a,b){return (a.articulo+a.color+a.talle)<(b.articulo+b.color+b.talle)?-1:1;});
+        var rows=items.map(function(x){return '<tr><td style="padding:3px 0;border-bottom:1px solid var(--line)">'+esc(x.articulo||x.codigo)+' · '+esc(x.color||'-')+' · '+esc(sl(x.talle)||'-')+'<div class="meta" style="font-size:10px;color:var(--muted)">'+esc(x.codigo)+'</div></td><td class="num" style="border-bottom:1px solid var(--line)"><b>'+x.cantidad+'</b></td></tr>';}).join('');
+        return '<div class="card" style="padding:12px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px"><b>'+fmt(G.fecha)+'</b><span class="pill-ok">'+G.items.length+' var · '+G.unid+' u.</span></div><table style="width:100%;font-size:12.5px;border-collapse:collapse"><tbody>'+rows+'</tbody></table></div>';
+      }).join('');
+    }
+  }
   var st=computeStock();
-  $('#stCod').textContent=st.length;
-  $('#stUni').textContent=st.reduce(function(s,x){return s+x.stock;},0).toLocaleString('es-AR');
-  var q=$('#fStock').value.trim().toLowerCase();
+  var fs=$('#fStock');var q=fs?fs.value.trim().toLowerCase():'';
   var sf=st.filter(function(x){return !q||(x.codigo+' '+x.desc).toLowerCase().indexOf(q)>=0;});
-  $('#stockBody').innerHTML=sf.length?sf.map(function(x){return '<tr><td><b>'+esc(x.codigo)+'</b></td><td>'+esc(x.desc)+'</td><td class="num"><b>'+x.stock+'</b></td></tr>';}).join(''):'<tr><td colspan="3" class="empty">Sin stock confirmado todavía.</td></tr>';
+  var sb2=$('#stockBody');if(sb2)sb2.innerHTML=sf.length?sf.map(function(x){return '<tr><td><b>'+esc(x.codigo)+'</b></td><td>'+esc(x.desc)+'</td><td class="num"><b>'+x.stock+'</b></td></tr>';}).join(''):'<tr><td colspan="3" class="empty">Sin stock todavía.</td></tr>';
 }
 
 /* ================= EXCEL / BACKUP ================= */
@@ -774,10 +798,16 @@ function switchView(v){
 
 /* ================= LOGIN ================= */
 function showLogin(){$('#login').classList.add('show');$('#loginName').value=responsable||'';setTimeout(function(){$('#loginName').focus();},150);}
+function loadPerson(name){
+  responsable=(name||'').toString().trim();
+  localStorage.setItem(LS.r,JSON.stringify(responsable));
+  fichas=loadNS(LS.f,[]);session=loadNS(LS.s,{});boxes=loadNS(LS.b,[]);picked=loadNS('inv_pick_v2',[]);
+  try{renderPicked();renderSess();renderPickResults(false);renderResumen();}catch(e){}
+}
 function doLogin(){
   var n=$('#loginName').value.trim();
   if(!n){$('#loginName').classList.add('needf');$('#loginName').focus();toast('Ingresá tu nombre');return;}
-  responsable=n;localStorage.setItem(LS.r,JSON.stringify(responsable));
+  loadPerson(n);
   $('#responsable').value=responsable;$('#login').classList.remove('show');
   toast('Hola '+responsable+' 👋');
 }
@@ -794,7 +824,7 @@ $('#search').onfocus=function(){renderPickResults(true);};
 document.addEventListener('click',function(e){if(!e.target.closest('.picker'))$('#pickResults').classList.remove('open');});
 $('#clrPick').onclick=function(){if(picked.length&&confirm('¿Quitar todos los artículos de la lista? (no borra lo ya confirmado)')){picked.forEach(function(id){var a=artById(id);if(a)Object.keys(a.variants).forEach(function(k){var c=a.variants[k].c;if(session[c])delete session[c];});});picked=[];savePick();saveAll();renderPicked();renderSess();}};
 $('#responsable').value=responsable;
-$('#responsable').oninput=function(){responsable=this.value.trim();localStorage.setItem(LS.r,JSON.stringify(responsable));if(responsable)$('.resp').classList.remove('warn');};
+$('#responsable').readOnly=true;
 $('#sheetX').onclick=$('#shCancel').onclick=function(){hideSheet('#sheetBg','#sheet');curArt=null;};
 $('#sheetBg').onclick=function(){hideSheet('#sheetBg','#sheet');curArt=null;};
 $('#shAccept').onclick=acceptSheet;
