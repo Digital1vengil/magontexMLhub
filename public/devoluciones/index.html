@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Devoluciones ML</title>
+<style>
+  :root{--brand:#1e824c;--brand2:#166139;--accent:#e6a817;--danger:#c0392b;--ink:#12241d;--muted:#7a8a83;--line:#e5eae7;--bg:#eef2f0;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  .app{max-width:760px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+  header{background:var(--brand);color:#fff;padding:16px 16px 14px;position:relative}
+  header .t{font-weight:800;font-size:18px}
+  header .s{font-size:12px;opacity:.9;margin-top:2px}
+  .resp{margin-top:10px;background:rgba(255,255,255,.15);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:15px}
+  main{padding:14px 14px 120px;flex:1}
+  .search{background:#fff;border:1px solid var(--line);border-radius:14px;display:flex;align-items:center;gap:8px;padding:12px 14px}
+  .search input{border:0;outline:0;font-size:16px;flex:1;background:transparent}
+  .results{background:#fff;border:1px solid var(--line);border-radius:14px;margin-top:8px;max-height:52vh;overflow:auto;display:none}
+  .results.open{display:block}
+  .pres{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .pres:last-child{border-bottom:none}
+  .pres .nm{font-weight:700;font-size:15px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .empty{padding:16px;color:var(--muted);font-size:14px;text-align:center}
+  .b{border:none;border-radius:12px;font-weight:800;cursor:pointer}
+  .bico{width:46px;padding:8px 0;font-size:18px;line-height:1;flex:0 0 auto}
+  .bfalla{background:#fff;color:var(--danger);border:1px solid #f2c7c9}
+  .bopt{background:var(--accent);color:#3a2c00}
+  .sectitle{font-weight:800;font-size:13px;color:var(--muted);margin:16px 4px 8px;text-transform:uppercase;letter-spacing:.03em}
+  .row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+  .row .nm{flex:1;min-width:0;font-weight:700;font-size:14px}
+  .cf{color:var(--danger);font-weight:800}.co{color:var(--brand);font-weight:800}
+  .rem{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px}
+  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--brand2);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:760px;margin:0 auto}
+  .bar b{font-size:15px}
+  .bconf{background:#fff;color:var(--brand2);padding:12px 18px;font-size:15px}
+  .login{position:fixed;inset:0;background:var(--brand);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+  .login.show{display:flex}
+  .lcard{background:#fff;border-radius:18px;padding:24px 20px;width:100%;max-width:380px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  .lcard h1{margin:0 0 4px;font-size:20px}.lcard p{color:var(--muted);font-size:13px;margin:0 0 16px}
+  .lcard input{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:16px;margin-bottom:12px}
+  .go{width:100%;background:var(--brand);color:#fff;padding:13px;border:none;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer}
+  .gear{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);border:none;color:#fff;width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer}
+  .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;z-index:60}.sheet-bg.show{display:block}
+  .sheet{position:fixed;left:0;right:0;bottom:0;background:#fff;border-radius:18px 18px 0 0;padding:20px 16px 24px;max-width:760px;margin:0 auto;transform:translateY(100%);transition:.25s;z-index:61}
+  .sheet.show{transform:none}
+  .sheet h2{margin:0 0 12px;font-size:16px}
+  .sheet label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+  .sheet input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:monospace;margin-bottom:12px}
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#12241d;color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:70;max-width:90%;text-align:center}
+  .toast.show{opacity:1}
+  .pill{font-size:11px;padding:2px 8px;border-radius:20px}
+  .pill-ok{background:#e1f3ea;color:var(--brand)}.pill-no{background:#fdeaea;color:var(--danger)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <button class="gear" id="btnGear" title="Ajustes">&#9881;</button>
+    <div class="t">&#8617;&#65039; Devoluciones ML</div>
+    <div class="s" id="hdrMeta">Cargando catalogo...</div>
+    <div class="resp"><span>&#128100;</span><span id="respName">&mdash;</span></div>
+  </header>
+  <main>
+    <div class="sectitle" style="margin-top:4px">Buscar prenda a devolver</div>
+    <div class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7a8a83" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="q" placeholder="SKU, articulo, color, talle..." autocomplete="off"></div>
+    <div class="results" id="results"></div>
+    <div class="sectitle" id="totLine">0 falla &middot; 0 optimo &middot; 0 variantes</div>
+    <div id="list"></div>
+  </main>
+  <div class="bar"><div>Devolucion: <b id="barTot">0</b> u.</div><button class="b bconf" id="btnConfirm">&#9989; Confirmar y subir</button></div>
+</div>
+
+<div class="login" id="login"><div class="lcard">
+  <h1>&#8617;&#65039; Devoluciones ML</h1>
+  <p>&iquest;Qui&eacute;n carga las devoluciones?</p>
+  <input id="loginName" placeholder="Nombre y apellido" autocomplete="name">
+  <button class="go" id="loginBtn">Comenzar &#9656;</button>
+</div></div>
+
+<div class="sheet-bg" id="cfgBg"></div>
+<div class="sheet" id="cfgSheet">
+  <h2>Ajustes</h2>
+  <label>URL del Apps Script de Devoluciones (/exec)</label>
+  <input id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec">
+  <div id="cfgState" style="margin-bottom:12px"></div>
+  <div style="display:flex;gap:8px">
+    <button class="b" style="flex:1;background:#fff;border:1px solid var(--line);padding:11px" id="cfgTest">&#128268; Probar</button>
+    <button class="b" style="flex:1;background:var(--brand);color:#fff;padding:11px" id="cfgSave">Guardar</button>
+  </div>
+  <button class="b" style="width:100%;margin-top:10px;background:#fff;border:1px solid var(--line);padding:11px" id="cfgLogout">&#128100; Cambiar persona</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="../inventario/articulos.js"></script>
+<script>
+(function(){
+"use strict";
+var ART=window.ARTICULOS||[];
+var $=function(s){return document.querySelector(s);};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var SLB={'MADRE':'Madre','UNICO':'Unico'}; function sl(s){return SLB[s]||s;}
+function colorLabel(a,code){for(var i=0;i<a.colors.length;i++)if(a.colors[i].c===code)return a.colors[i].l;return code;}
+
+var GAS_KEY='devml_gas_url';
+var resp=load('devml_resp','');
+var gasUrl=load(GAS_KEY,'');
+function load(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
+function nsKey(){return 'devml_v1__'+((resp||'default').toString().trim().toLowerCase());}
+var devol=load(nsKey(),{});
+function saveDevol(){localStorage.setItem(nsKey(),JSON.stringify(devol));}
+
+var idx=[];
+ART.forEach(function(a){Object.keys(a.variants).forEach(function(k){var p=k.split('|');if(p[1]==='MADRE')return;var v=a.variants[k];var color=a.colors.length?colorLabel(a,p[0]):'';idx.push({codigo:v.c,articulo:a.name,color:color,talle:p[1]||'',rubro:a.rubro||'',key:(a.name+' '+color+' '+(p[1]||'')+' '+v.c+' '+(a.rubro||'')).toLowerCase()});});});
+function find(c){for(var i=0;i<idx.length;i++)if(idx[i].codigo===c)return idx[i];return null;}
+
+function renderResults(open){
+  var el=$('#results'),qv=$('#q').value.trim().toLowerCase();
+  if(!open||!qv){el.classList.remove('open');el.innerHTML='';return;}
+  var terms=qv.split(/\s+/),out=[];
+  for(var i=0;i<idx.length&&out.length<60;i++){var it=idx[i],ok=true;for(var t=0;t<terms.length;t++){if(it.key.indexOf(terms[t])<0){ok=false;break;}}if(ok)out.push(it);}
+  if(!out.length){el.innerHTML='<div class="empty">Sin resultados.</div>';el.classList.add('open');return;}
+  el.innerHTML=out.map(function(x){var d=devol[x.codigo];var tag=d?(' <span style="font-size:10px;color:var(--muted)">- ya '+(d.falla||0)+'F/'+(d.optimo||0)+'O</span>'):'';
+    return '<div class="pres"><div class="nm">'+esc(x.codigo)+tag+'</div><button class="b bico bfalla" data-e="falla" data-c="'+esc(x.codigo)+'" title="Falla">&#10005;</button><button class="b bico bopt" data-e="optimo" data-c="'+esc(x.codigo)+'" title="Optimo">&#10003;</button></div>';}).join('');
+  el.classList.add('open');
+  Array.prototype.forEach.call(el.querySelectorAll('[data-e]'),function(b){b.onclick=function(ev){ev.stopPropagation();add(b.getAttribute('data-c'),b.getAttribute('data-e'));};});
+}
+function add(c,estado){
+  if(!resp){toast('Pone tu nombre primero');showLogin();return;}
+  var x=find(c);if(!x)return;
+  if(!devol[c])devol[c]={codigo:c,articulo:x.articulo,color:x.color,talle:x.talle,rubro:x.rubro,falla:0,optimo:0};
+  devol[c][estado]=(devol[c][estado]||0)+1;saveDevol();renderList();renderResults(true);
+  toast((estado==='falla'?'FALLA':'OPTIMO')+' +1 - '+c);
+}
+function arr(){return Object.keys(devol).map(function(k){return devol[k];});}
+function renderList(){
+  var a=arr(),tf=a.reduce(function(s,x){return s+(x.falla||0);},0),to=a.reduce(function(s,x){return s+(x.optimo||0);},0);
+  $('#totLine').innerHTML=tf+' falla &middot; '+to+' optimo &middot; '+a.length+' variantes';
+  $('#barTot').textContent=tf+to;
+  var el=$('#list');
+  if(!a.length){el.innerHTML='<div class="empty">Busca arriba y toca X (falla) o &#10003; (optimo).</div>';return;}
+  a.sort(function(x,y){return x.codigo<y.codigo?-1:1;});
+  el.innerHTML=a.map(function(x){return '<div class="row"><div class="nm">'+esc(x.codigo)+'</div><span class="cf">X '+(x.falla||0)+'</span><span class="co">&#10003; '+(x.optimo||0)+'</span><button class="rem" data-r="'+esc(x.codigo)+'">&times;</button></div>';}).join('');
+  Array.prototype.forEach.call(el.querySelectorAll('[data-r]'),function(b){b.onclick=function(){delete devol[b.getAttribute('data-r')];saveDevol();renderList();renderResults($('#results').classList.contains('open'));};});
+}
+function confirmUp(){
+  var a=arr();if(!a.length){toast('No hay devoluciones cargadas');return;}
+  if(!resp){toast('Pone tu nombre primero');showLogin();return;}
+  var now=new Date(),sid='D'+now.getTime(),items=[];
+  a.forEach(function(x){if(x.falla>0)items.push({codigo:x.codigo,articulo:x.articulo,color:x.color,talle:x.talle,rubro:x.rubro,estado:'FALLA',cantidad:x.falla});if(x.optimo>0)items.push({codigo:x.codigo,articulo:x.articulo,color:x.color,talle:x.talle,rubro:x.rubro,estado:'OPTIMO',cantidad:x.optimo});});
+  var payload={responsable:resp,fecha:now.toISOString(),sesion:sid,items:items};
+  var done=function(up){devol={};saveDevol();renderList();renderResults(false);$('#q').value='';toast(up?'Subido a Drive':'Guardado (falta configurar Apps Script en Ajustes)');};
+  if(gasUrl){var b=$('#btnConfirm');b.disabled=true;b.textContent='Subiendo...';
+    fetch(gasUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}).then(function(){b.disabled=false;b.textContent='Confirmar y subir';done(true);}).catch(function(){b.disabled=false;b.textContent='Confirmar y subir';done(false);});
+  } else { done(false); }
+}
+
+function showLogin(){$('#login').classList.add('show');$('#loginName').value=resp||'';setTimeout(function(){$('#loginName').focus();},150);}
+function doLogin(){var n=$('#loginName').value.trim();if(!n){toast('Ingresa tu nombre');return;}
+  resp=n;localStorage.setItem('devml_resp',JSON.stringify(resp));devol=load(nsKey(),{});
+  $('#respName').textContent=resp;$('#login').classList.remove('show');renderList();toast('Hola '+resp);}
+$('#loginBtn').onclick=doLogin;
+$('#loginName').onkeydown=function(e){if(e.key==='Enter')doLogin();};
+
+function cfgRender(){$('#cfgState').innerHTML=gasUrl?'<span class="pill pill-ok">Drive configurado</span>':'<span class="pill pill-no">Drive sin configurar</span>';}
+$('#btnGear').onclick=function(){$('#cfgUrl').value=gasUrl;cfgRender();$('#cfgBg').classList.add('show');$('#cfgSheet').classList.add('show');};
+function cfgClose(){$('#cfgBg').classList.remove('show');$('#cfgSheet').classList.remove('show');}
+$('#cfgBg').onclick=cfgClose;
+$('#cfgSave').onclick=function(){gasUrl=$('#cfgUrl').value.trim();localStorage.setItem(GAS_KEY,JSON.stringify(gasUrl));cfgRender();toast('Guardado');};
+$('#cfgTest').onclick=function(){var u=$('#cfgUrl').value.trim();if(!u){toast('Pega la URL primero');return;}
+  fetch(u,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({test:true})}).then(function(){toast('Enviado. Verifica en tu Drive.');}).catch(function(){toast('No se pudo contactar');});};
+$('#cfgLogout').onclick=function(){cfgClose();showLogin();};
+
+$('#q').oninput=function(){renderResults(true);};
+$('#q').onfocus=function(){renderResults(true);};
+document.addEventListener('click',function(e){if(!e.target.closest('.search')&&!e.target.closest('.results'))$('#results').classList.remove('open');});
+$('#btnConfirm').onclick=confirmUp;
+
+var tT;function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tT);tT=setTimeout(function(){t.classList.remove('show');},2400);}
+$('#hdrMeta').textContent=ART.length?(ART.length+' articulos - '+ART.reduce(function(s,a){return s+Object.keys(a.variants).length;},0)+' SKUs'):'No se cargo el catalogo';
+$('#respName').textContent=resp||'-';
+renderList();
+if(!resp)showLogin();
+})();
+</script>
+</body>
+</html>
