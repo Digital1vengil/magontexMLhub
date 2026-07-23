@@ -247,7 +247,7 @@
       </div>
       <div class="segtabs">
         <button class="seg on" id="segPick">A contar (<b id="pickCount">0</b>)</button>
-        <button class="seg" id="segAll">📋 Todos los artículos</button>
+        <button class="seg" id="segRes">📊 Resumen</button>
       </div>
       <div id="panelPick">
         <div class="pickhead">
@@ -256,35 +256,35 @@
         </div>
         <div id="pickedList"></div>
       </div>
-      <div id="panelAll" style="display:none">
-        <div class="chips" id="chips"></div>
-        <div id="allList"></div>
+      <div id="panelRes" style="display:none">
+        <div class="sec-title" style="margin-top:4px" id="resTitle">Mi historial</div>
+        <div class="stats">
+          <div class="stat"><div class="n" id="stSes">0</div><div class="l">Conteos</div></div>
+          <div class="stat"><div class="n" id="stVar">0</div><div class="l">Variantes</div></div>
+          <div class="stat"><div class="n" id="stUni">0</div><div class="l">Unidades</div></div>
+          <div class="stat"><div class="n" id="stCod">0</div><div class="l">Códigos</div></div>
+        </div>
+        <div id="invProg"></div>
+        <div class="sec-title">Historial de conteos</div>
+        <div id="histBody"></div>
+        <div class="row-btns" style="margin-top:12px">
+          <button class="btn btn-accent" id="btnExport">⬇️ Exportar Excel</button>
+          <button class="btn btn-ghost" id="btnBackup">💾 Backup</button>
+          <button class="btn btn-danger" id="btnClear">🗑️ Vaciar</button>
+        </div>
+        <details style="margin-top:14px">
+          <summary class="sec-title" style="cursor:pointer">Stock por código (este dispositivo)</summary>
+          <div class="search" style="margin:8px 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="fStock" placeholder="Filtrar stock…"></div>
+          <div class="tablewrap"><table><thead><tr><th>Código</th><th>Descripción</th><th class="num">Stock</th></tr></thead><tbody id="stockBody"></tbody></table></div>
+        </details>
+        <input type="file" id="fileRestore" accept=".json" style="display:none">
       </div>
     </section>
 
     <!-- RESUMEN -->
-    <section class="view" id="v-resumen">
-      <div class="sec-title" style="margin-top:4px" id="resTitle">Mi historial</div>
-      <div class="stats">
-        <div class="stat"><div class="n" id="stSes">0</div><div class="l">Conteos</div></div>
-        <div class="stat"><div class="n" id="stVar">0</div><div class="l">Variantes</div></div>
-        <div class="stat"><div class="n" id="stUni">0</div><div class="l">Unidades</div></div>
-        <div class="stat"><div class="n" id="stCod">0</div><div class="l">Códigos</div></div>
-      </div>
-      <div id="invProg"></div>
-      <div class="sec-title">Historial de conteos</div>
-      <div id="histBody"></div>
-      <div class="row-btns" style="margin-top:12px">
-        <button class="btn btn-accent" id="btnExport">⬇️ Exportar Excel</button>
-        <button class="btn btn-ghost" id="btnBackup">💾 Backup</button>
-        <button class="btn btn-danger" id="btnClear">🗑️ Vaciar</button>
-      </div>
-      <details style="margin-top:14px">
-        <summary class="sec-title" style="cursor:pointer">Stock por código (este dispositivo)</summary>
-        <div class="search" style="margin:8px 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="fStock" placeholder="Filtrar stock…"></div>
-        <div class="tablewrap"><table><thead><tr><th>Código</th><th>Descripción</th><th class="num">Stock</th></tr></thead><tbody id="stockBody"></tbody></table></div>
-      </details>
-      <input type="file" id="fileRestore" accept=".json" style="display:none">
+    <section class="view" id="v-todos">
+      <div class="chips" id="chips"></div>
+      <div id="allList"></div>
     </section>
 
     <!-- AJUSTES -->
@@ -323,7 +323,7 @@
   <!-- bottom nav -->
   <nav class="nav"><div class="app-nav">
     <a href="#" class="on" data-view="contar"><span class="ic">➕</span>Contar</a>
-    <a href="#" data-view="resumen"><span class="ic">📊</span>Resumen</a>
+    <a href="#" data-view="todos"><span class="ic">📋</span>Todos</a>
     <a href="#" data-view="ajustes"><span class="ic">⚙️</span>Ajustes</a>
   </div></nav>
 </div>
@@ -434,10 +434,11 @@ function renderAll(){
 function switchTab(t){
   var pick=t==='pick';
   $('#panelPick').style.display=pick?'':'none';
-  $('#panelAll').style.display=pick?'none':'';
+  $('#panelRes').style.display=pick?'none':'';
   $('#segPick').classList.toggle('on',pick);
-  $('#segAll').classList.toggle('on',!pick);
-  if(!pick)renderAll();
+  $('#segRes').classList.toggle('on',!pick);
+  var pk=document.querySelector('#v-contar .picker'); if(pk) pk.style.display=pick?'':'none';
+  if(!pick)renderResumen();
 }
 function pickRemove(id){
   var a=artById(id);
@@ -792,7 +793,7 @@ function switchView(v){
   Array.prototype.forEach.call(document.querySelectorAll('.view'),function(s){s.classList.remove('active');});
   $('#v-'+v).classList.add('active');
   Array.prototype.forEach.call(document.querySelectorAll('.nav a'),function(a){a.classList.toggle('on',a.dataset.view===v);});
-  if(v==='resumen')renderResumen();
+  if(v==='todos'){renderChips();renderAll();}
   window.scrollTo(0,0);
 }
 
@@ -818,7 +819,7 @@ $('#btnLogout').onclick=function(){showLogin();switchView('contar');};
 
 /* ================= EVENTOS ================= */
 $('#segPick').onclick=function(){switchTab('pick');};
-$('#segAll').onclick=function(){switchTab('all');};
+$('#segRes').onclick=function(){switchTab('res');};
 $('#search').oninput=function(){renderPickResults(true);};
 $('#search').onfocus=function(){renderPickResults(true);};
 document.addEventListener('click',function(e){if(!e.target.closest('.picker'))$('#pickResults').classList.remove('open');});
