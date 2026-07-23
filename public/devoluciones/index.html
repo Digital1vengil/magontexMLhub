@@ -105,8 +105,9 @@ var SLB={'MADRE':'Madre','UNICO':'Unico'}; function sl(s){return SLB[s]||s;}
 function colorLabel(a,code){for(var i=0;i<a.colors.length;i++)if(a.colors[i].c===code)return a.colors[i].l;return code;}
 
 var GAS_KEY='devml_gas_url';
+var DEF_GAS_URL='https://script.google.com/macros/s/AKfycbxzFr7gjMFHjLlGsY0OEclD7-S6yqziMomw6MkIJXMBnx6ZajueyOFrxd8W9ZhvUQM3/exec';
 var resp=load('devml_resp','');
-var gasUrl=load(GAS_KEY,'');
+var gasUrl=load(GAS_KEY,DEF_GAS_URL);
 function load(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
 function nsKey(){return 'devml_v1__'+((resp||'default').toString().trim().toLowerCase());}
 var devol=load(nsKey(),{});
