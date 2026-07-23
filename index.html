@@ -448,6 +448,107 @@
   </div>
 
 <!-- PLATAFORMAS -->
+<!-- CONEXIONES Y DRIVE (Sistema) -->
+<div class="sec" id="sec-conexiones">
+  <div class="sec-head">
+    <div class="sec-title">Conexiones y Google Drive</div>
+    <div class="sec-sub">Todos los links de Apps Script y las carpetas de Drive del Scanner y del Inventario, en un solo lugar. Editá acá si algo se rompe — se aplica a las apps (mismo origen).</div>
+  </div>
+  <div class="sec-body" style="display:flex;flex-direction:column;gap:14px;max-width:820px">
+
+    <!-- Google Drive (ParkaHub) -->
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">🔗 Google Drive · ParkaHub</span>
+        <div class="status-row"><div class="sdot" id="gd-dot" style="background:var(--text-muted)"></div><span id="gd-status">Sin conectar</span></div>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" id="gd-connect-btn" onclick="gdConnect()">Conectar Google Drive</button>
+          <button class="btn btn-danger btn-sm" id="gd-disconnect-btn" style="display:none" onclick="gdDisconnect()">Desconectar</button>
+        </div>
+        <div class="field"><label>OAuth Client ID (console.cloud.google.com → Credenciales)</label>
+          <div style="display:flex;gap:8px">
+            <input id="conx-clientid" placeholder="xxxx.apps.googleusercontent.com" style="font-family:monospace;font-size:12px;flex:1">
+            <button class="btn btn-secondary btn-sm" onclick="conxSaveClientId()">Guardar</button>
+          </div>
+        </div>
+        <div class="field"><label>Carpeta de destino (reportes de despacho)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="gd-folder-name" placeholder="Buscar/crear carpeta por nombre…" style="flex:1;min-width:180px">
+            <button class="btn btn-secondary btn-sm" onclick="gdPickFolder()">Buscar</button>
+            <button class="btn btn-secondary btn-sm" onclick="gdCreateFolder(document.getElementById('gd-folder-name').value)">Crear</button>
+            <button class="btn btn-ghost btn-sm" onclick="gdOpenFolder()">Abrir ↗</button>
+            <button class="btn btn-ghost btn-sm" onclick="gdClearFolder()">Quitar</button>
+          </div>
+          <input id="gd-folder-id" readonly placeholder="ID de carpeta" style="font-family:monospace;font-size:11px;margin-top:6px;color:var(--text-muted)">
+          <div id="gd-folder-status" style="display:none;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--green)"><span id="gd-folder-status-name"></span></div>
+          <div id="gd-folder-list" style="display:none;margin-top:8px"><div id="gd-folder-results" style="display:flex;flex-direction:column;gap:6px"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scanner Apps Script -->
+    <div class="card">
+      <div class="card-head"><span class="card-title">📷 Scanner de despacho · Apps Script</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div class="field"><label>URL del Web App (/exec)</label>
+          <input id="conx-scanner-url" placeholder="https://script.google.com/macros/s/…/exec" style="font-family:monospace;font-size:12px">
+        </div>
+        <div class="btn-row" style="flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="conxSaveScanner()">Guardar</button>
+          <button class="btn btn-secondary btn-sm" onclick="conxTest('scanner')">Probar</button>
+          <button class="btn btn-ghost btn-sm" onclick="conxOpen('scanner')">Abrir ↗</button>
+          <button class="btn btn-ghost btn-sm" onclick="conxCopy('conx-scanner-url')">Copiar</button>
+          <button class="btn btn-ghost btn-sm" onclick="conxResetScanner()">↺ Default</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted)">Guarda los despachos en tu Drive. Backend: <code>Codigo.gs</code> (repo parka-scanner). Vaciar el campo desactiva Drive (queda solo local).</div>
+      </div>
+    </div>
+
+    <!-- Inventario Apps Script -->
+    <div class="card">
+      <div class="card-head"><span class="card-title">📦 Inventario · Apps Script</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div class="field"><label>URL del Web App (/exec)</label>
+          <input id="conx-inv-url" placeholder="https://script.google.com/macros/s/…/exec" style="font-family:monospace;font-size:12px">
+        </div>
+        <div class="btn-row" style="flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="conxSaveInv()">Guardar</button>
+          <button class="btn btn-secondary btn-sm" onclick="conxTest('inventario')">Probar</button>
+          <button class="btn btn-ghost btn-sm" onclick="conxOpen('inventario')">Abrir ↗</button>
+          <button class="btn btn-ghost btn-sm" onclick="conxCopy('conx-inv-url')">Copiar</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted)">Guarda los conteos en Drive (carpeta “Inventario - Conteos”, multiusuario). Backend: <code>APPS_SCRIPT.gs</code> (repo inventario-stock).</div>
+      </div>
+    </div>
+
+    <!-- Carpetas de Drive -->
+    <div class="card">
+      <div class="card-head"><span class="card-title">📁 Carpetas de Drive (despacho)</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div class="field"><label>Carpeta Flex (ID)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="conx-flex" style="font-family:monospace;font-size:12px;flex:1;min-width:180px">
+            <button class="btn btn-ghost btn-sm" onclick="conxOpenFolderId('conx-flex')">Abrir ↗</button>
+            <button class="btn btn-ghost btn-sm" onclick="conxCopy('conx-flex')">Copiar</button>
+          </div>
+        </div>
+        <div class="field"><label>Carpeta Colecta (ID)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="conx-colecta" style="font-family:monospace;font-size:12px;flex:1;min-width:180px">
+            <button class="btn btn-ghost btn-sm" onclick="conxOpenFolderId('conx-colecta')">Abrir ↗</button>
+            <button class="btn btn-ghost btn-sm" onclick="conxCopy('conx-colecta')">Copiar</button>
+          </div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary btn-sm" onclick="conxSaveFolders()">Guardar carpetas</button></div>
+        <div style="font-size:11px;color:var(--text-muted)">El Inventario usa su propia carpeta “Inventario - Conteos” (la crea el Apps Script). Los cambios de carpeta toman efecto al recargar.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <div class="sec" id="sec-platforms">
   <div class="sec-head"><div class="sec-title">Plataformas</div><div class="sec-sub">Cargá y revisá órdenes de Mercado Libre y Tienda Nube</div></div>
   <div class="sec-body">
@@ -1523,7 +1624,7 @@
     ['precios',[['precios','Lista de precios'],['matrices','Matrices'],['costos','Costos'],['maestro','Maestro']]],
     ['operaciones',[['orders','Cargar órdenes'],['mapeo','Mapeo'],['hist-cargas','Historial cargas'],['historial','Historial despachos'],['__scanner','Scanner despacho ↗']]],
     ['inventario',[['inventario','Conteo de stock']]],
-    ['sistema',[['platforms','Plataformas']]]
+    ['sistema',[['platforms','Plataformas'],['conexiones','Conexiones y Drive']]]
   ];
   var lastTab={};
   window.navGroup=function(gid,btn){
