@@ -488,6 +488,23 @@
       </div>
     </div>
 
+    <!-- ParkaHub Apps Script (reportes a Drive sin OAuth) -->
+    <div class="card">
+      <div class="card-head"><span class="card-title">💾 ParkaHub · Apps Script (reportes a Drive)</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div class="field"><label>URL del Web App (/exec)</label>
+          <input id="conx-parka-url" placeholder="https://script.google.com/macros/s/…/exec" style="font-family:monospace;font-size:12px">
+        </div>
+        <div class="btn-row" style="flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="conxSaveParka()">Guardar</button>
+          <button class="btn btn-secondary btn-sm" onclick="conxTest('parka')">Probar</button>
+          <button class="btn btn-ghost btn-sm" onclick="conxOpen('parka')">Abrir ↗</button>
+          <button class="btn btn-ghost btn-sm" onclick="conxCopy('conx-parka-url')">Copiar</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted)">Recomendado: si cargás esta URL, ParkaHub guarda los reportes en Drive por Apps Script <b>sin OAuth</b> (no hace falta conectar arriba). Pegá el <code>Codigo.gs</code> que te pasé, publicá como Web App y traé la URL /exec. Usa la carpeta de destino y separa Flex/Colecta por día.</div>
+      </div>
+    </div>
+
     <!-- Scanner Apps Script -->
     <div class="card">
       <div class="card-head"><span class="card-title">📷 Scanner de despacho · Apps Script</span></div>
