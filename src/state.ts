@@ -67,7 +67,7 @@ export const S = {
   D: {},
 
   // --- CHARTS / TABLA ---
-  CHART_COLORS: ['#4F46E5','#818CF8','#d97706','#dc2626','#0284c7','#7c3aed','#0891b2','#be185d'],
+  CHART_COLORS: ['#2F9E6E','#7FC9A6','#d97706','#dc2626','#0284c7','#2E8B75','#0891b2','#be185d'],
   SC: null,
   SD: 1,
   FQ: '',

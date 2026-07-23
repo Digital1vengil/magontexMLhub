@@ -312,14 +312,14 @@ export function buildAllCharts(){
   var maxU=Math.max.apply(null,T)||1;
 
   /* Ventas semanales */
-  mkChart('cVentas','bar',W,[{data:T,backgroundColor:T.map(function(v){return 'rgba(79,70,229,'+(0.25+0.75*(v/maxU)).toFixed(2)+')';}),borderRadius:5,borderSkipped:false}],{scales:{x:{grid:{display:false},border:{display:false},ticks:{font:{size:9},maxRotation:50,autoSkip:false}},y:{grid:{color:'rgba(79,70,229,.08)'},border:{display:false},ticks:{font:{size:10}}}}});
+  mkChart('cVentas','bar',W,[{data:T,backgroundColor:T.map(function(v){return 'rgba(47,158,110,'+(0.25+0.75*(v/maxU)).toFixed(2)+')';}),borderRadius:5,borderSkipped:false}],{scales:{x:{grid:{display:false},border:{display:false},ticks:{font:{size:9},maxRotation:50,autoSkip:false}},y:{grid:{color:'rgba(47,158,110,.08)'},border:{display:false},ticks:{font:{size:10}}}}});
 
   /* Top publicaciones */
   var pubs=S.D.top_publicaciones||[];
   var pubLabels=pubs.map(function(p){var t=p.titulo||'';return t.length>22?t.substring(0,22)+'...':t;});
   var pubData=pubs.map(function(p){return p.unidades||0;});
   var pubColors=pubData.map(function(_,i){return S.CHART_COLORS[i%S.CHART_COLORS.length];});
-  mkChart('cPubs','bar',pubLabels,[{data:pubData,backgroundColor:pubColors,borderRadius:5}],{indexAxis:'y',scales:{x:{grid:{color:'rgba(79,70,229,.08)'},border:{display:false},ticks:{font:{size:9}}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:9}}}}});
+  mkChart('cPubs','bar',pubLabels,[{data:pubData,backgroundColor:pubColors,borderRadius:5}],{indexAxis:'y',scales:{x:{grid:{color:'rgba(47,158,110,.08)'},border:{display:false},ticks:{font:{size:9}}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:9}}}}});
 
   /* Envio donut */
   var env=S.D.by_envio||{};
@@ -328,16 +328,16 @@ export function buildAllCharts(){
   /* Provincias */
   var prov=S.D.by_provincia||{};
   var provColors=(prov.labels||[]).map(function(_,i){return S.CHART_COLORS[i%S.CHART_COLORS.length];});
-  mkChart('cProv','bar',prov.labels||[],[{data:prov.totals||[],backgroundColor:provColors,borderRadius:5}],{indexAxis:'y',scales:{x:{grid:{color:'rgba(79,70,229,.08)'},border:{display:false},ticks:{font:{size:9}}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:9}}}}});
+  mkChart('cProv','bar',prov.labels||[],[{data:prov.totals||[],backgroundColor:provColors,borderRadius:5}],{indexAxis:'y',scales:{x:{grid:{color:'rgba(47,158,110,.08)'},border:{display:false},ticks:{font:{size:9}}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:9}}}}});
 
   /* Cantidad */
   var cant=S.D.by_cantidad||{};
-  mkChart('cCant','bar',cant.labels||[],[{data:cant.totals||[],backgroundColor:S.CHART_COLORS,borderRadius:6}],{scales:{x:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(79,70,229,.08)'},border:{display:false},ticks:{font:{size:10}}}}});
+  mkChart('cCant','bar',cant.labels||[],[{data:cant.totals||[],backgroundColor:S.CHART_COLORS,borderRadius:6}],{scales:{x:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(47,158,110,.08)'},border:{display:false},ticks:{font:{size:10}}}}});
 
   /* Envio por semana */
   var envW=env.by_week||{};
   var envDs=Object.keys(envW).map(function(k,i){return{label:k,data:envW[k],backgroundColor:S.CHART_COLORS[i%S.CHART_COLORS.length]+'bb',borderRadius:3,stack:'s'};});
-  if(envDs.length)mkChart('cEnvioSem','bar',W,envDs,{scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{font:{size:9},maxRotation:50,autoSkip:false}},y:{stacked:true,grid:{color:'rgba(79,70,229,.08)'},border:{display:false},ticks:{font:{size:10}}}}});
+  if(envDs.length)mkChart('cEnvioSem','bar',W,envDs,{scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{font:{size:9},maxRotation:50,autoSkip:false}},y:{stacked:true,grid:{color:'rgba(47,158,110,.08)'},border:{display:false},ticks:{font:{size:10}}}}});
 }
 
 /* (removido) Tabla ventas legacy: srt/doFilter/thC/buildTable escribían en #tbl/#tc que no existen
@@ -382,7 +382,7 @@ export function renderStats(){
     provEl.innerHTML = prov.labels.slice(0,8).map(function(l,i){
       var v = prov.totals[i]||0;
       var pct = Math.round(100*v/totalPr);
-      var colors = ['var(--g700)','var(--g600)','#22c55e','#4ade80','var(--sk)','var(--am)','#7c3aed','#0891b2'];
+      var colors = ['var(--g700)','var(--g600)','#22c55e','#4ade80','var(--sk)','var(--am)','#2E8B75','#0891b2'];
       return '<div class="stat-row"><div class="stat-label">'+l+'</div><div class="stat-bar-wrap"><div class="stat-bar" style="width:'+pct+'%;background:'+colors[i]+'"></div></div><div class="stat-val">'+v.toLocaleString('es-AR')+'</div><div class="stat-pct">'+pct+'%</div></div>';
     }).join('');
   }
@@ -392,7 +392,7 @@ export function renderStats(){
 export function renderTop10(){
   var el=document.getElementById('top10-talles');
   if(!el)return;
-  var colors=['var(--g900)','var(--g800)','var(--g700)','var(--g600)','#22c55e','#4ade80','var(--am)','var(--sk)','#7c3aed','#0891b2'];
+  var colors=['var(--g900)','var(--g800)','var(--g700)','var(--g600)','#22c55e','#4ade80','var(--am)','var(--sk)','#2E8B75','#0891b2'];
   el.innerHTML=S.TOP10_TALLES.map(function(item,i){
     var max=item.talles[0]?item.talles[0].v:1;
     var bars=item.talles.map(function(t){
@@ -434,7 +434,7 @@ export function rsmBuild2(){
   // (La distribución por talle —Hombre/Mujer, solo abrigos— se calcula más abajo cruzando con el catálogo.)
 
   // Colores
-  var COLORS = ['#4F46E5','#6366F1','#818CF8','#A5B4FC','#312E81','#4338CA','#3730A3','#7C3AED','#8B5CF6','#C7D2FE','#DDD6FE'];
+  var COLORS = ['#2F9E6E','#34B07C','#7FC9A6','#A8DCC2','#14532D','#268A5E','#1F6B47','#2E8B75','#4FB58C','#CDEBD9','#DFF3E8'];
 
   // ── Función generadora de torta SVG ─────────────────────
   function makePie(data, size){
@@ -483,7 +483,7 @@ export function rsmBuild2(){
       +'<td style="text-align:center;font-size:13px;font-weight:700;color:#2e7d4f">'+v.toLocaleString('es-AR')+'</td>'
       +'<td style="padding-right:12px">'
       +'<div style="display:flex;align-items:center;gap:6px">'
-      +'<div style="flex:1;height:6px;background:var(--border);border-radius:3px"><div style="height:100%;width:'+barPct+'%;background:#6366F1;border-radius:3px"></div></div>'
+      +'<div style="flex:1;height:6px;background:var(--border);border-radius:3px"><div style="height:100%;width:'+barPct+'%;background:#34B07C;border-radius:3px"></div></div>'
       +'<span style="font-size:10px;color:var(--text-muted);width:28px">'+pct+'%</span>'
       +'</div></td></tr>';
   });
@@ -582,7 +582,7 @@ export function rsmBuild2(){
         var isLast = i===0;
         return '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;width:'+bw+'px">'
           +'<div style="font-size:8px;color:var(--text-soft);font-weight:600;line-height:1">'+wTots[i]+'</div>'
-          +'<div style="width:100%;height:'+h+'px;background:'+(isLast?'#16a34a':'#6366F1')+';border-radius:3px 3px 0 0;opacity:'+(isLast?'1':'.7')+'"></div>'
+          +'<div style="width:100%;height:'+h+'px;background:'+(isLast?'#16a34a':'#34B07C')+';border-radius:3px 3px 0 0;opacity:'+(isLast?'1':'.7')+'"></div>'
           +'<div style="font-size:8px;color:var(--text-muted);text-align:center;line-height:1.1;max-width:'+bw+'px;overflow:hidden">'+w.label.split(' – ')[0]+'</div>'
           +'</div>';
       }).join('')
@@ -619,12 +619,12 @@ export function rsmBuild2(){
 // Best-effort: si la geo aún está backfilleándose muestra lo que hay; NO rompe el Resumen. Recrea el <canvas> en
 // cada render (destruye el chart previo) para que re-navegar a Resumen no choque con "canvas already in use".
 export function rsmGeoBuild(){
-  var C={ prov:'#6366F1', Flex:'#0284c7', Correo:'#15803d', Full:'#d97706', Otro:'#9ca3af' };
+  var C={ prov:'#34B07C', Flex:'#0284c7', Correo:'#15803d', Full:'#d97706', Otro:'#9ca3af' };
   var ZC=['#166534','#22C55E','#4ADE80','#0284c7','#38bdf8','#d97706','#f59e0b','#a78bfa'];
   var fmtD=function(iso){ if(!iso)return ''; var p=String(iso).split('-'); return p.length>=3?(parseInt(p[2],10)+'/'+parseInt(p[1],10)):String(iso); };
   var fresh=function(cid,cvid){ var el=document.getElementById(cid); if(!el)return null; try{ if(window.Chart&&Chart.getChart){ var pv=Chart.getChart(cvid); if(pv)pv.destroy(); } }catch(e){} el.innerHTML='<canvas id="'+cvid+'"></canvas>'; return cvid; };
   var msg=function(cid,t){ var el=document.getElementById(cid); if(el)el.innerHTML='<div style="padding:24px;color:var(--text-soft);font-size:12px">'+t+'</div>'; };
-  var pctScale={ stacked:true, max:100, grid:{color:'rgba(79,70,229,.08)'}, border:{display:false}, ticks:{font:{size:10},callback:function(v){return v+'%';}} };
+  var pctScale={ stacked:true, max:100, grid:{color:'rgba(47,158,110,.08)'}, border:{display:false}, ticks:{font:{size:10},callback:function(v){return v+'%';}} };
   var wkX={ stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9},maxRotation:50,autoSkip:true} };
 
   Promise.all([apiGet('/api/geo-mix?weeks=8'), apiGet('/api/geo-trend?weeks=20')]).then(function(res){
@@ -634,7 +634,7 @@ export function rsmGeoBuild(){
     var prov=allProv.slice(0,12);
     if(prov.length){ fresh('rsmn-geo-prov','rsmn-geo-prov-cv');
       mkChart('rsmn-geo-prov-cv','bar', prov.map(function(r){return r.k;}), [{data:prov.map(function(r){return r.u;}),backgroundColor:C.prov,borderRadius:4}],
-        {indexAxis:'y',plugins:{tooltip:{callbacks:{label:function(c){return c.parsed.x.toLocaleString('es-AR')+' u ('+(provTot?Math.round(c.parsed.x/provTot*100):0)+'%)';}}}},scales:{x:{grid:{color:'rgba(79,70,229,.08)'},border:{display:false},ticks:{font:{size:9}}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}});
+        {indexAxis:'y',plugins:{tooltip:{callbacks:{label:function(c){return c.parsed.x.toLocaleString('es-AR')+' u ('+(provTot?Math.round(c.parsed.x/provTot*100):0)+'%)';}}}},scales:{x:{grid:{color:'rgba(47,158,110,.08)'},border:{display:false},ticks:{font:{size:9}}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}});
     } else msg('rsmn-geo-prov','Sin datos de geografía todavía.');
     var ps=document.getElementById('rsmn-geo-prov-sub'); if(ps) ps.textContent = provTot ? (provTot.toLocaleString('es-AR')+' u'+(mix.capturePct!=null?' · '+mix.capturePct+'% de la demanda':'')) : '';
 

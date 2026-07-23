@@ -52,7 +52,7 @@ function renderHCargas(){
     return '<tr>'
       +'<td style="font-size:12px;white-space:nowrap">'+e.fecha+'</td>'
       +'<td style="font-size:12px;color:var(--text-soft);max-width:200px;overflow:hidden;text-overflow:ellipsis">'+e.archivo+'</td>'
-      +'<td style="text-align:center;font-weight:700;color:#4F46E5">'+e.ordenes+'</td>'
+      +'<td style="text-align:center;font-weight:700;color:#2F9E6E">'+e.ordenes+'</td>'
       +'<td style="text-align:center;font-weight:700">'+e.unidades+'</td>'
       +'<td style="text-align:center;color:var(--teal)">'+e.flex+'</td>'
       +'<td style="text-align:center;color:var(--blue)">'+e.colecta+'</td>'
@@ -559,15 +559,15 @@ function _vmlRenderTable2(){
   var thW = Math.max(90, Math.min(140, Math.floor(800/(weeks.length+1))));
   var sortTotalArrow = S.VML_SORT._byTotal === 'asc' ? ' ↑' : S.VML_SORT._byTotal === 'desc' ? ' ↓' : '';
   var thead = '<tr>'
-    + '<th style="position:sticky;left:0;background:#6366F1;color:#FFFFFF;z-index:2;min-width:190px;padding-left:14px;border-right:1px solid rgba(255,255,255,0.25)">CÓDIGO</th>'
-    + '<th onclick="vmlSortByTotal()" style="text-align:center;min-width:90px;cursor:pointer;background:#6366F1;color:#FFFFFF;border-right:1px solid rgba(255,255,255,0.25)">'
+    + '<th style="position:sticky;left:0;background:#34B07C;color:#FFFFFF;z-index:2;min-width:190px;padding-left:14px;border-right:1px solid rgba(255,255,255,0.25)">CÓDIGO</th>'
+    + '<th onclick="vmlSortByTotal()" style="text-align:center;min-width:90px;cursor:pointer;background:#34B07C;color:#FFFFFF;border-right:1px solid rgba(255,255,255,0.25)">'
     + '<div style="font-size:10px;font-weight:800;color:#FFFFFF;letter-spacing:.06em">TOTAL'+sortTotalArrow+'</div>'
     + '</th>';
   weeks.forEach(function(w, wi){
     var sort  = S.VML_SORT[wi] || 'desc';
     var arrow = (S.VML_SORT._primary===wi) ? (sort==='desc'?' ↓':' ↑') : '';
     var isActive = S.VML_SORT._primary===wi;
-    var colBg = isActive ? '#4F46E5' : '#6366F1';
+    var colBg = isActive ? '#2F9E6E' : '#34B07C';
     thead += '<th onclick="vmlToggleSort('+wi+')" style="text-align:center;min-width:'+thW+'px;cursor:pointer;background:'+colBg+';color:#FFFFFF;border-left:1px solid rgba(255,255,255,0.2)">'
       + '<div style="font-size:11px;font-weight:700;color:#FFFFFF">'+w.label+arrow+'</div>'
       + '<div style="font-size:10px;color:rgba(255,255,255,0.75);font-weight:500;margin-top:1px">'+w.total+' uds</div>'
@@ -621,12 +621,12 @@ function _vmlRenderTable2(){
         var talleVals = g.talles[talle];
         var talleTotal = talleVals.reduce(function(s,v){return s+v;},0);
         var isLast = ti===talleKeys.length-1;
-        html += '<tr id="'+(ti===0?rowId+'-t':'')+'vml-talle-'+rowId+'-'+ti+'" class="talle-row-'+rowId+'" style="display:none;background:#E0E7FF;border-bottom:'+(isLast?'2px solid #6366F1':'1px solid #A5B4FC')+'">';
-        html += '<td style="padding:6px 8px 6px 38px;position:sticky;left:0;background:#C7D2FE;z-index:1;border-right:1px solid #6366F1">'
+        html += '<tr id="'+(ti===0?rowId+'-t':'')+'vml-talle-'+rowId+'-'+ti+'" class="talle-row-'+rowId+'" style="display:none;background:#E0E7FF;border-bottom:'+(isLast?'2px solid #34B07C':'1px solid #A8DCC2')+'">';
+        html += '<td style="padding:6px 8px 6px 38px;position:sticky;left:0;background:#CDEBD9;z-index:1;border-right:1px solid #34B07C">'
               + '<span style="font-size:10px;color:#1A5C42;margin-right:4px">└</span>'
               + '<span style="font-family:monospace;font-size:11px;font-weight:700;color:#0A0A0A">'+talle+'</span>'
               + '</td>';
-        html += '<td style="text-align:center;padding:6px 8px;font-size:12px;font-weight:700;color:#0A0A0A;background:#C7D2FE;border-right:1px solid #6366F1">'+talleTotal+'</td>';
+        html += '<td style="text-align:center;padding:6px 8px;font-size:12px;font-weight:700;color:#0A0A0A;background:#CDEBD9;border-right:1px solid #34B07C">'+talleTotal+'</td>';
         weeks.forEach(function(w, wi){
           var v = talleVals[wi] || 0;
           html += '<td style="text-align:center;padding:6px 8px;font-size:12px;border-left:1px solid rgba(0,0,0,0.12);'
@@ -641,7 +641,7 @@ function _vmlRenderTable2(){
   // ── Fila TOTAL ──
   html += '<tr style="background:var(--surface2);border-top:2px solid var(--border)">';
   html += '<td style="position:sticky;left:0;background:var(--surface2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);padding:10px 8px 10px 14px;border-right:2px solid var(--border)">TOTAL</td>';
-  html += '<td style="text-align:center;padding:10px 8px;font-size:16px;font-weight:800;color:#1E1B4B;font-family:\'Space Grotesk\',sans-serif;background:#E0E7FF;border-right:1px solid #6366F1">'+grandTotal+'</td>';
+  html += '<td style="text-align:center;padding:10px 8px;font-size:16px;font-weight:800;color:#1E1B4B;font-family:\'Space Grotesk\',sans-serif;background:#E0E7FF;border-right:1px solid #34B07C">'+grandTotal+'</td>';
   weeks.forEach(function(w){ html += '<td style="text-align:center;padding:10px 8px;font-size:14px;font-weight:700;color:#1E1B4B;background:#A8D5C8;font-family:\'Space Grotesk\',sans-serif">'+w.total+'</td>'; });
   html += '</tr>';
 
