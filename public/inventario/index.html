@@ -367,12 +367,13 @@
 (function(){
 "use strict";
 var ARTS = window.ARTICULOS || [];
+var INV_DEFAULT_DRIVE_URL='https://script.google.com/macros/s/AKfycbz1u-9dowkdoAd-icmpAWFqzckJwYU9XxH7zTdBiulC0jn3IpNFj9PRQxDPMlIF2dUE/exec';
 var LS={f:'inv_fichas_v2',s:'inv_sess_v2',r:'inv_resp_v2',d:'inv_drive_v2',b:'inv_boxes_v2'};
 var fichas=load(LS.f,[]);              // historial confirmado
 var session=load(LS.s,{});            // conteo actual, por codigo (totales)
 var boxes=load(LS.b,[]);              // cajas: [{id,artId,articulo,rubro,resp,fecha,total,items:{codigo:{...}}}]
 var responsable=load(LS.r,'');
-var driveUrl=load(LS.d,'');
+var driveUrl=load(LS.d,INV_DEFAULT_DRIVE_URL);
 var curArt=null;
 var expandedBox=null;   // caja con editor inline abierto
 
