@@ -286,19 +286,6 @@
       <div class="chips" id="chips"></div>
       <div id="allList"></div>
     </section>
-    <!-- DEVOLUCIONES -->
-    <section class="view" id="v-devol">
-      <div class="sec-title" style="margin-top:4px">Devoluciones · Falla / Óptimo</div>
-      <div class="hint" style="margin:-4px 4px 8px">Buscá la prenda (color y talle) y tocá <b style="color:#c0392b">✕</b> (falla) o <b style="color:#1e824c">✓</b> (óptimo). Cada toque suma 1 unidad. Se sube a la carpeta “devoluciones ML”.</div>
-      <div class="picker" id="devWrap">
-        <div class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="devSearch" placeholder="Buscar prenda a devolver (color · talle)…" autocomplete="off"></div>
-        <div class="results" id="devResults"></div>
-      </div>
-      <div class="hint" id="devTot" style="margin:10px 4px">🔴 <b>0</b> falla · 🟢 <b>0</b> óptimo · 0 variantes</div>
-      <div id="devList"></div>
-      <div class="row-btns" style="margin-top:12px"><button class="btn btn-primary" id="btnDevConfirm">✅ Confirmar y subir</button></div>
-    </section>
-
     <!-- AJUSTES -->
     <section class="view" id="v-ajustes">
       <div class="card">
@@ -336,7 +323,6 @@
   <nav class="nav"><div class="app-nav">
     <a href="#" class="on" data-view="contar"><span class="ic">➕</span>Contar</a>
     <a href="#" data-view="todos"><span class="ic">📋</span>Todos</a>
-    <a href="#" data-view="devol"><span class="ic">↩️</span>Devol.</a>
     <a href="#" data-view="ajustes"><span class="ic">⚙️</span>Ajustes</a>
   </div></nav>
 </div>
@@ -803,74 +789,12 @@ function driveStateRender(){
   $('#driveState').innerHTML=driveUrl?'<span class="pill-ok">Drive configurado</span>':'<span class="pill-no">Drive sin configurar</span>';
 }
 
-/* ================= DEVOLUCIONES ================= */
-var DEV_KEY='inv_devol_v1';
-var devol=loadNS(DEV_KEY,{});
-function saveDevol(){saveNS(DEV_KEY,devol);}
-var devIdx=[];
-ARTS.forEach(function(a){
-  Object.keys(a.variants).forEach(function(k){
-    var parts=k.split('|'); if(parts[1]==='MADRE') return;
-    var v=a.variants[k];
-    var color=a.colors.length?colorLabel(a,parts[0]):'';
-    var talle=parts[1]||'';
-    devIdx.push({codigo:v.c,articulo:a.name,color:color,talle:talle,rubro:a.rubro||'',key:(a.name+' '+color+' '+talle+' '+v.c+' '+(a.rubro||'')).toLowerCase()});
-  });
-});
-function devFind(c){for(var i=0;i<devIdx.length;i++)if(devIdx[i].codigo===c)return devIdx[i];return null;}
-function devLabel(x){return esc(x.articulo)+' · '+(x.color?esc(x.color)+' · ':'')+esc(sl(x.talle)||'Único');}
-function renderDevResults(open){
-  var el=$('#devResults'); if(!el) return;
-  var q=$('#devSearch').value.trim().toLowerCase();
-  if(!open||!q){el.classList.remove('open');el.innerHTML='';return;}
-  var terms=q.split(/\s+/),out=[];
-  for(var i=0;i<devIdx.length&&out.length<60;i++){var it=devIdx[i],ok=true;for(var t=0;t<terms.length;t++){if(it.key.indexOf(terms[t])<0){ok=false;break;}}if(ok)out.push(it);}
-  if(!out.length){el.innerHTML='<div class="empty">Sin resultados.</div>';el.classList.add('open');return;}
-  el.innerHTML=out.map(function(x){var d=devol[x.codigo];var tag=d?(' <span style="font-size:10px;color:var(--muted)">· ya '+(d.falla||0)+'F/'+(d.optimo||0)+'O</span>'):'';
-    return '<div class="pres" style="align-items:center"><div class="info"><div class="nm">'+esc(x.codigo)+tag+'</div></div><div style="display:flex;gap:6px;flex:0 0 auto"><button class="btn btn-danger" title="Falla" aria-label="Falla" style="padding:8px 0;width:46px;min-width:0;flex:0 0 auto;font-size:18px;font-weight:700;line-height:1" data-dev="falla" data-c="'+esc(x.codigo)+'">✕</button><button class="btn btn-accent" title="Óptimo" aria-label="Óptimo" style="padding:8px 0;width:46px;min-width:0;flex:0 0 auto;font-size:18px;font-weight:700;line-height:1" data-dev="optimo" data-c="'+esc(x.codigo)+'">✓</button></div></div>';
-  }).join('');
-  el.classList.add('open');
-  Array.prototype.forEach.call(el.querySelectorAll('[data-dev]'),function(b){b.onclick=function(ev){ev.stopPropagation();devAdd(b.dataset.c,b.dataset.dev);};});
-}
-function devAdd(codigo,estado){
-  if(!requireResp())return;
-  var x=devFind(codigo); if(!x)return;
-  if(!devol[codigo])devol[codigo]={codigo:codigo,articulo:x.articulo,color:x.color,talle:x.talle,rubro:x.rubro,falla:0,optimo:0};
-  devol[codigo][estado]=(devol[codigo][estado]||0)+1;
-  saveDevol();renderDevList();renderDevResults(true);
-  toast((estado==='falla'?'🔴':'🟢')+' +1 · '+x.articulo);
-}
-function devArr(){return Object.keys(devol).map(function(k){return devol[k];});}
-function renderDevList(){
-  var arr=devArr();
-  var tf=arr.reduce(function(s,x){return s+(x.falla||0);},0),to=arr.reduce(function(s,x){return s+(x.optimo||0);},0);
-  var tot=$('#devTot'); if(tot) tot.innerHTML='🔴 <b>'+tf+'</b> falla · 🟢 <b>'+to+'</b> óptimo · '+arr.length+' variantes';
-  var el=$('#devList'); if(!el)return;
-  if(!arr.length){el.innerHTML='<div class="empty" style="padding:16px 4px;color:var(--muted)">Buscá arriba y tocá 🔴 Falla o 🟢 Óptimo para sumar devoluciones.</div>';return;}
-  arr.sort(function(a,b){return (a.articulo+a.color+a.talle)<(b.articulo+b.color+b.talle)?-1:1;});
-  el.innerHTML=arr.map(function(x){
-    return '<div class="art" style="align-items:center"><div class="info"><div class="nm">'+esc(x.codigo)+'</div></div><div style="display:flex;gap:10px;align-items:center;flex:0 0 auto"><span style="color:#c0392b;font-weight:700">🔴 '+(x.falla||0)+'</span><span style="color:var(--brand);font-weight:700">🟢 '+(x.optimo||0)+'</span><button class="rem" data-drem="'+esc(x.codigo)+'" title="Quitar">×</button></div></div>';
-  }).join('');
-  Array.prototype.forEach.call(el.querySelectorAll('.rem'),function(b){b.onclick=function(){delete devol[b.dataset.drem];saveDevol();renderDevList();renderDevResults($('#devResults').classList.contains('open'));};});
-}
-function confirmDevol(){
-  var arr=devArr(); if(!arr.length){toast('No hay devoluciones cargadas');return;}
-  if(!requireResp())return;
-  var now=new Date(),sid='D'+now.getTime(),items=[];
-  arr.forEach(function(x){if(x.falla>0)items.push({codigo:x.codigo,articulo:x.articulo,color:x.color,talle:x.talle,rubro:x.rubro,estado:'FALLA',cantidad:x.falla});if(x.optimo>0)items.push({codigo:x.codigo,articulo:x.articulo,color:x.color,talle:x.talle,rubro:x.rubro,estado:'OPTIMO',cantidad:x.optimo});});
-  var payload={tipo:'devolucion',sesion:sid,responsable:responsable||'',fecha:now.toISOString(),items:items};
-  var done=function(up){devol={};saveDevol();renderDevList();renderDevResults(false);$('#devSearch').value='';toast(up?'✅ Devoluciones subidas a Drive':'✅ Guardadas (Drive no configurado)');};
-  if(driveUrl){var b=$('#btnDevConfirm');if(b){b.disabled=true;b.textContent='Subiendo…';}
-    fetch(driveUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}).then(function(){if(b){b.disabled=false;b.textContent='✅ Confirmar y subir';}done(true);}).catch(function(){if(b){b.disabled=false;b.textContent='✅ Confirmar y subir';}done(false);});
-  } else { done(false); }
-}
-
 /* ================= NAV ================= */
 function switchView(v){
   Array.prototype.forEach.call(document.querySelectorAll('.view'),function(s){s.classList.remove('active');});
   curView=v; $('#v-'+v).classList.add('active');
   Array.prototype.forEach.call(document.querySelectorAll('.nav a'),function(a){a.classList.toggle('on',a.dataset.view===v);});
-  if(v==='todos'){renderChips();renderAll();} if(v==='devol'){renderDevList();setTimeout(function(){var s=$('#devSearch');if(s)s.focus();},100);}
+  if(v==='todos'){renderChips();renderAll();}
   renderSess();
   window.scrollTo(0,0);
 }
@@ -880,8 +804,8 @@ function showLogin(){$('#login').classList.add('show');$('#loginName').value=res
 function loadPerson(name){
   responsable=(name||'').toString().trim();
   localStorage.setItem(LS.r,JSON.stringify(responsable));
-  fichas=loadNS(LS.f,[]);session=loadNS(LS.s,{});boxes=loadNS(LS.b,[]);picked=loadNS('inv_pick_v2',[]);devol=loadNS(DEV_KEY,{});
-  try{renderPicked();renderSess();renderPickResults(false);renderResumen();renderDevList();}catch(e){}
+  fichas=loadNS(LS.f,[]);session=loadNS(LS.s,{});boxes=loadNS(LS.b,[]);picked=loadNS('inv_pick_v2',[]);
+  try{renderPicked();renderSess();renderPickResults(false);renderResumen();}catch(e){}
 }
 function doLogin(){
   var n=$('#loginName').value.trim();
@@ -901,10 +825,6 @@ $('#segRes').onclick=function(){switchTab('res');};
 $('#search').oninput=function(){renderPickResults(true);};
 $('#search').onfocus=function(){renderPickResults(true);};
 document.addEventListener('click',function(e){if(!e.target.closest('.picker'))$('#pickResults').classList.remove('open');});
-$('#devSearch').oninput=function(){renderDevResults(true);};
-$('#devSearch').onfocus=function(){renderDevResults(true);};
-$('#btnDevConfirm').onclick=confirmDevol;
-document.addEventListener('click',function(e){if(!e.target.closest('#devWrap')){var dr=$('#devResults');if(dr)dr.classList.remove('open');}});
 $('#clrPick').onclick=function(){if(picked.length&&confirm('¿Quitar todos los artículos de la lista? (no borra lo ya confirmado)')){picked.forEach(function(id){var a=artById(id);if(a)Object.keys(a.variants).forEach(function(k){var c=a.variants[k].c;if(session[c])delete session[c];});});picked=[];savePick();saveAll();renderPicked();renderSess();}};
 $('#responsable').value=responsable;
 $('#responsable').readOnly=true;
