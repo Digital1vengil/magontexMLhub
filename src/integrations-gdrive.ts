@@ -8,7 +8,7 @@ import { stLabel } from './util'
 
 async function gdSaveManualToDrive(){
   if(!S.manualOrders.length){ toast('No hay órdenes manuales para subir','error'); return; }
-  if(!S.GD.token){ toast('Conectate a Google Drive primero en Configuración','error'); return; }
+  if(!S.GD.token && !gdGasUrl()){ toast('Configurá Google Drive primero (Sistema → Conexiones)','error'); return; }
   toast('Subiendo órdenes manuales a Drive...','info');
   const wb=XLSX.utils.book_new();
   const ws=XLSX.utils.aoa_to_sheet([['N. Orden','Fecha','SKU','Producto','Cant.','Canal','Estado','Notas'],...S.manualOrders.map(o=>[o.orderId,o.date,o.sku,o.product,o.qty,o.channel,stLabel(o.status),o.notes])]);
@@ -40,7 +40,9 @@ function _ordersSheet(orders){
 
 async function gdSaveOrdersToDrive(){
   if(!S.xlImported.length){ toast('No hay órdenes para subir','error'); return; }
-  if(!S.GD.token){ toast('Conectate a Google Drive primero','error'); return; }
+  if(!S.GD.token && !gdGasUrl()){ toast('Configurá Google Drive primero (Sistema → Conexiones)','error'); return; }
+  var _gas = gdGasUrl();
+  var _today0 = new Date().toISOString().slice(0,10);
   var btn = document.getElementById('btn-save-drive-orders');
   if(btn){ btn.textContent='⏳ Subiendo...'; btn.disabled=true; }
   try{
@@ -53,16 +55,16 @@ async function gdSaveOrdersToDrive(){
       var wbF = _ordersSheet(flexOrders);
       var wboutF = XLSX.write(wbF, {bookType:'xlsx', type:'array'});
       var blobF = new Blob([wboutF], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-      var folderF = await gdGetOrCreateDayFolder('flex');
-      var okF = await gdUploadFile(blobF, 'PARKA_Ordenes_Flex_'+today+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', folderF);
+      var folderF = _gas ? GD_PARENTS.flex : await gdGetOrCreateDayFolder('flex');
+      var okF = await gdUploadFile(blobF, 'PARKA_Ordenes_Flex_'+today+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', folderF, _gas ? _today0 : '');
       if(okF) subidas.push('Flex ('+flexOrders.length+')');
     }
     if(colectaOrders.length){
       var wbC = _ordersSheet(colectaOrders);
       var wboutC = XLSX.write(wbC, {bookType:'xlsx', type:'array'});
       var blobC = new Blob([wboutC], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-      var folderC = await gdGetOrCreateDayFolder('colecta');
-      var okC = await gdUploadFile(blobC, 'PARKA_Ordenes_Colecta_'+today+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', folderC);
+      var folderC = _gas ? GD_PARENTS.colecta : await gdGetOrCreateDayFolder('colecta');
+      var okC = await gdUploadFile(blobC, 'PARKA_Ordenes_Colecta_'+today+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', folderC, _gas ? _today0 : '');
       if(okC) subidas.push('Colecta ('+colectaOrders.length+')');
     }
 
@@ -74,7 +76,7 @@ async function gdSaveOrdersToDrive(){
 
 async function gdSaveControlToDrive(){
   if(!window._lastControlWb){ toast('Generá el reporte primero','error'); return; }
-  if(!S.GD.token){ toast('Conectate a Google Drive primero en Configuración','error'); return; }
+  if(!S.GD.token && !gdGasUrl()){ toast('Configurá Google Drive primero (Sistema → Conexiones)','error'); return; }
   var btns = ['btn-save-drive-ctrl','btn-save-drive-rep'].map(function(id){ return document.getElementById(id); }).filter(Boolean);
   btns.forEach(function(b){ b.textContent='⏳ Subiendo...'; b.disabled=true; });
   try{
@@ -323,9 +325,33 @@ async function gdGetOrCreateDayFolder(kind){
   }
 }
 
+// URL del Apps Script de ParkaHub (opción sin OAuth). Si está seteada, se usa esa vía.
+function gdGasUrl(){ try{ return localStorage.getItem('parka_gas_url') || ''; }catch(e){ return ''; } }
+function blobToB64(blob){
+  return new Promise(function(res, rej){
+    var r = new FileReader();
+    r.onload  = function(){ res(String(r.result).split(',')[1] || ''); };
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
+}
+
 // Subir archivo Excel a Drive (llamado desde generateControlReport, exportHistXL, gdSaveOrdersToDrive, etc.)
 // folderId es opcional: si no se pasa, usa la carpeta genérica configurada (S.GD.folderId).
-async function gdUploadFile(blob, filename, mimeType, folderId){
+// subfolder es opcional: si viene, el Apps Script crea/usa esa subcarpeta (ej: fecha del día).
+async function gdUploadFile(blob, filename, mimeType, folderId, subfolder){
+  var gas = gdGasUrl();
+  // --- Vía Apps Script (sin OAuth): POST base64, el script guarda en TU Drive ---
+  if(gas){
+    try{
+      var b64 = await blobToB64(blob);
+      await fetch(gas, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ filename:filename, mimeType:mimeType, dataBase64:b64, parentId:(folderId||S.GD.folderId||''), subfolder:subfolder||'' }) });
+      toast('✓ Enviado a Drive: '+filename+(subfolder?(' → '+subfolder):''),'success');
+      return true;
+    }catch(e){ toast('Error enviando a Drive (Apps Script): '+e.message,'error'); return false; }
+  }
+  // --- Vía OAuth (Drive API con token) ---
   var targetFolder = folderId || S.GD.folderId;
   if(!S.GD.token || !targetFolder) return false;
   try{

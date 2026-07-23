@@ -11,6 +11,7 @@ const K_INV     = 'inv_drive_v2'            // inventario: URL Apps Script (JSON
 const K_FLEX    = 'parka_gd_flex_id'        // carpeta Flex (override)
 const K_COLECTA = 'parka_gd_colecta_id'     // carpeta Colecta (override)
 const K_CLIENT  = 'parka_gd_client_id'      // OAuth Client ID de ParkaHub
+const K_PARKA   = 'parka_gas_url'           // ParkaHub: URL Apps Script (reportes a Drive, sin OAuth)
 
 const DEF_SCANNER = 'https://script.google.com/macros/s/AKfycbwP_qnW67-sO-EMCyZSVStCkRXCXtNT7mDE-l-z6vqGFbmZVumhMf7KBTxMiXfZeu-X/exec'
 const DEF_FLEX    = '1dhCrQ7mYCv5HqweRDaF_y4TPPGAPegOl'
@@ -30,6 +31,14 @@ export function conxInit(){
   setv('conx-flex', localStorage.getItem(K_FLEX) || DEF_FLEX)
   setv('conx-colecta', localStorage.getItem(K_COLECTA) || DEF_COLECTA)
   setv('conx-clientid', localStorage.getItem(K_CLIENT) || '')
+  setv('conx-parka-url', localStorage.getItem(K_PARKA) || '')
+}
+
+export function conxSaveParka(){
+  const u = val('conx-parka-url')
+  if(u && !/^https:\/\/script\.google\.com\/.*\/exec/.test(u)){ toast('La URL debería ser https://script.google.com/.../exec','error'); return }
+  if(u) localStorage.setItem(K_PARKA, u); else localStorage.removeItem(K_PARKA)
+  toast(u ? 'ParkaHub guardará en Drive por Apps Script (sin OAuth)' : 'ParkaHub: Apps Script quitado', 'success')
 }
 
 export function conxSaveScanner(){
@@ -62,7 +71,7 @@ export function conxSaveClientId(){
 // Probar: Apps Script no permite leer la respuesta por CORS, así que hacemos un
 // POST no-cors (igual que las apps) y avisamos que hay que verificar en Drive.
 export async function conxTest(which){
-  const u = which === 'scanner' ? val('conx-scanner-url') : val('conx-inv-url')
+  const u = which === 'scanner' ? val('conx-scanner-url') : which === 'parka' ? val('conx-parka-url') : val('conx-inv-url')
   if(!u){ toast('Primero pegá y guardá la URL','error'); return }
   try{
     await fetch(u, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({test:true, from:'parkahub'}) })
@@ -70,7 +79,7 @@ export async function conxTest(which){
   }catch(e){ toast('No se pudo contactar la URL. Revisá que sea la /exec correcta.', 'error') }
 }
 export function conxOpen(which){
-  const u = which === 'scanner' ? val('conx-scanner-url') : val('conx-inv-url')
+  const u = which === 'scanner' ? val('conx-scanner-url') : which === 'parka' ? val('conx-parka-url') : val('conx-inv-url')
   if(u) window.open(u, '_blank', 'noopener')
 }
 export function conxCopy(id){
@@ -84,6 +93,7 @@ export function conxOpenFolderId(id){
 try{
   window.conxInit = conxInit
   window.conxSaveScanner = conxSaveScanner
+  window.conxSaveParka = conxSaveParka
   window.conxResetScanner = conxResetScanner
   window.conxSaveInv = conxSaveInv
   window.conxSaveFolders = conxSaveFolders
