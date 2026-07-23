@@ -894,13 +894,11 @@ async function loadDriveFiles() {
          </button>`
       : '';
 
-    const loadSelectedBtn = group.files.length > 1
-      ? `<button class="drive-load-selected-btn hidden w-full bg-forest-600 active:bg-forest-700 text-white font-bold
+    const loadSelectedBtn = `<button class="drive-load-selected-btn hidden w-full bg-forest-600 active:bg-forest-700 text-white font-bold
                         rounded-2xl px-4 py-3 text-sm flex items-center justify-center gap-2 mb-2"
                 data-gi="${gi}">
            ➕ Cargar seleccionados (<span class="sel-count">0</span>)
-         </button>`
-      : '';
+         </button>`;
 
     const filesHTML = group.files.map((f, fi) => {
       const ext  = f.name.split('.').pop().toLowerCase();
@@ -921,7 +919,7 @@ async function loadDriveFiles() {
               <p class="text-slate-500 text-xs mt-0.5">${fmtSize(f.size)} · ${time}</p>
             </div>
           </button>
-          <span class="drive-lbl text-forest-600 text-sm font-bold flex-shrink-0">Cargar →</span>
+          <button class="drive-file-load drive-lbl text-forest-600 text-sm font-bold flex-shrink-0 active:opacity-60" data-file-id="${f.id}" data-file-name="${f.name}">Cargar →</button>
         </div>`;
     }).join('');
 
@@ -946,6 +944,10 @@ async function loadDriveFiles() {
   });
 
   list.querySelectorAll('.drive-file-btn').forEach(btn => {
+    btn.addEventListener('click', () =>
+      loadFileFromDrive(btn.dataset.fileId, btn.dataset.fileName, btn));
+  });
+  list.querySelectorAll('.drive-file-load').forEach(btn => {
     btn.addEventListener('click', () =>
       loadFileFromDrive(btn.dataset.fileId, btn.dataset.fileName, btn));
   });
@@ -2564,7 +2566,7 @@ function setDespachoUI(phase) {
   const tipoLbl = (function(){ var t = resolveDispatchType(); return t === 'flex' ? 'Flex' : (t === 'tiendanube' ? 'Tienda Nube' : 'Colecta'); })();
   if (phase === 'idle') {
     bIni.disabled = false; bIni.classList.remove('opacity-40','cursor-not-allowed');
-    bFin.disabled = true;  bFin.classList.add('opacity-40','cursor-not-allowed');
+    bFin.disabled = false; bFin.classList.remove('opacity-40','cursor-not-allowed');
     bIni.innerHTML = ic('rocket') + ' Iniciar Despacho · ' + tipoLbl;
     bFin.innerHTML = ic('check-circle') + ' Finalizar Despacho';
   } else if (phase === 'active') {
@@ -2633,13 +2635,13 @@ function confirmFinalizarConPendientes(count) {
 }
 
 async function finalizarDespacho() {
-  if (currentDespacho.length === 0) {
-    toast('No hay paquetes escaneados en este despacho', 'warn'); return;
-  }
-
-  // Todo el universo de paquetes a despachar (no solo lo escaneado en esta sesión).
+  // El universo de paquetes (no solo lo escaneado en esta sesión).
   const allPackages = (state && Array.isArray(state.packages)) ? state.packages : [];
-  const pendings     = allPackages.filter(p => p.estado !== 'despachado');
+  if (allPackages.length === 0) {
+    toast('Cargá un archivo primero para generar el reporte', 'warn'); return;
+  }
+  // Si quedan pendientes, se confirma (igual se puede generar cuando quieras).
+  const pendings = allPackages.filter(p => p.estado !== 'despachado');
   if (pendings.length > 0) {
     const proceed = await confirmFinalizarConPendientes(pendings.length);
     if (!proceed) return; // sigue escaneando, no se toca nada
@@ -2723,7 +2725,7 @@ async function finalizarDespacho() {
   if (driveResult && driveResult.ok) {
     savedTo = 'drive';
     savedFileName = driveResult.fileName || '';
-    toast('✅ ' + driveResult.fileName + ' guardado en Drive (' + n + ' paquetes)', 'ok', 6000);
+    toast('✅ ' + driveResult.fileName + ' guardado en Drive (' + reportItems.length + ' registros)', 'ok', 6000);
 
     saveDespachoLog({
       ts: new Date().toISOString(),
