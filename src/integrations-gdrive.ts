@@ -289,7 +289,11 @@ function gdCreateFolder(name){
 // Carpetas fijas de Drive para el despacho diario (mismas que usa "Flex de hoy" / "Colecta de
 // hoy" en Historial, ver index.html/driveHoy). Acá las usamos para SUBIR el reporte del día a
 // la subcarpeta correcta según el transportista, en vez de todo a la carpeta genérica S.GD.folderId.
-var GD_PARENTS = { flex:'1dhCrQ7mYCv5HqweRDaF_y4TPPGAPegOl', colecta:'1injla5TUawsfmCYcJsPA83xkoqF3r-Ng' };
+// IDs por defecto; se pueden sobreescribir desde Sistema → Conexiones (localStorage).
+var GD_PARENTS = {
+  flex:    localStorage.getItem('parka_gd_flex_id')    || '1dhCrQ7mYCv5HqweRDaF_y4TPPGAPegOl',
+  colecta: localStorage.getItem('parka_gd_colecta_id') || '1injla5TUawsfmCYcJsPA83xkoqF3r-Ng'
+};
 
 function gdHoy(){
   var d = new Date();
@@ -347,6 +351,7 @@ async function gdUploadFile(blob, filename, mimeType, folderId){
 export { gdInit, gdSetConnected, gdConnect, gdDisconnect, gdPickFolder, gdSelectFolder, gdOpenFolder, gdClearFolder, gdCreateFolder, gdUploadFile, gdSaveControlToDrive, gdSaveManualToDrive, gdSaveOrdersToDrive }
 
 // --- window-expose: handlers cableados desde el HTML ---
+try{window.gdInit=gdInit;}catch(e){}
 try{window.gdConnect=gdConnect;}catch(e){}
 try{window.gdDisconnect=gdDisconnect;}catch(e){}
 try{window.gdPickFolder=gdPickFolder;}catch(e){}

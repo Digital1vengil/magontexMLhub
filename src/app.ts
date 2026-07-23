@@ -28,6 +28,7 @@ import './radar'   // Fase 3: sección Radar (extraída de publicaciones.ts); su
 import './sales-ml'
 import { closeModal } from './sales-ml'
 import './mapeo'
+import './conexiones'
 import './nav'
 import { nav } from './nav'
 import './core-state'
