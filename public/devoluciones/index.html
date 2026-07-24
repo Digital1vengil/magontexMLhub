@@ -52,6 +52,16 @@
   .toast.show{opacity:1}
   .pill{font-size:11px;padding:2px 8px;border-radius:20px}
   .pill-ok{background:#e1f3ea;color:var(--brand)}.pill-no{background:#fdeaea;color:var(--danger)}
+  .prev-grid{display:flex;gap:12px}
+  .prev-col{flex:1;min-width:0}
+  .prev-h{font-weight:800;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;text-align:center;margin-bottom:6px}
+  .prev-h.opt{background:var(--brand)}.prev-h.fal{background:var(--danger)}
+  .prev-row{display:flex;align-items:center;gap:6px;padding:5px 6px;border-bottom:1px solid var(--line);font-size:13px}
+  .prev-row .pc{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prev-row .pq{font-weight:800}
+  .prev-row .ps{font-size:10px;color:var(--muted);min-width:56px;text-align:right}
+  .prev-tot{margin-top:12px;text-align:center;font-size:14px}
+  #prevSheet{max-height:82vh;overflow:auto}
 </style>
 </head>
 <body>
@@ -94,6 +104,17 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="sheet-bg" id="prevBg"></div>
+<div class="sheet" id="prevSheet">
+  <h2>Revis&aacute; antes de subir</h2>
+  <div id="prevBody"></div>
+  <div style="display:flex;gap:8px;margin-top:14px">
+    <button class="b" style="flex:1;background:#fff;border:1px solid var(--line);padding:12px" id="prevCancel">Cancelar</button>
+    <button class="b" style="flex:1;background:var(--brand);color:#fff;padding:12px" id="prevGo">&#9989; Confirmar y subir</button>
+  </div>
+</div>
+
+<script src="sectores.js"></script>
 <script src="../inventario/articulos.js"></script>
 <script>
 (function(){
@@ -146,14 +167,45 @@ function renderList(){
   el.innerHTML=a.map(function(x){return '<div class="row"><div class="nm">'+esc(x.codigo)+'</div><span class="cf">X '+(x.falla||0)+'</span><span class="co">&#10003; '+(x.optimo||0)+'</span><button class="rem" data-r="'+esc(x.codigo)+'">&times;</button></div>';}).join('');
   Array.prototype.forEach.call(el.querySelectorAll('[data-r]'),function(b){b.onclick=function(){delete devol[b.getAttribute('data-r')];saveDevol();renderList();renderResults($('#results').classList.contains('open'));};});
 }
+function secOf(x){ try{ return (window.sectorForArticle? window.sectorForArticle(x.articulo, x.color):'')||''; }catch(e){ return ''; } }
+function buildItems(){
+  var out=[];
+  arr().forEach(function(x){ var sec=secOf(x);
+    if(x.optimo>0) out.push({codigo:x.codigo,articulo:x.articulo,color:x.color,talle:x.talle,rubro:x.rubro,sector:sec,estado:'OPTIMO',cantidad:x.optimo});
+    if(x.falla>0)  out.push({codigo:x.codigo,articulo:x.articulo,color:x.color,talle:x.talle,rubro:x.rubro,sector:sec,estado:'FALLA', cantidad:x.falla});
+  });
+  return out;
+}
 function confirmUp(){
-  var a=arr();if(!a.length){toast('No hay devoluciones cargadas');return;}
+  var a=arr(); if(!a.length){toast('No hay devoluciones cargadas');return;}
   if(!resp){toast('Pone tu nombre primero');showLogin();return;}
-  var now=new Date(),sid='D'+now.getTime(),items=[];
-  a.forEach(function(x){if(x.falla>0)items.push({codigo:x.codigo,articulo:x.articulo,color:x.color,talle:x.talle,rubro:x.rubro,estado:'FALLA',cantidad:x.falla});if(x.optimo>0)items.push({codigo:x.codigo,articulo:x.articulo,color:x.color,talle:x.talle,rubro:x.rubro,estado:'OPTIMO',cantidad:x.optimo});});
+  openPreview();
+}
+function openPreview(){
+  var opt=[],fal=[];
+  arr().forEach(function(x){ var s=secOf(x);
+    if(x.optimo>0) opt.push({c:x.codigo,n:x.optimo,s:s});
+    if(x.falla>0)  fal.push({c:x.codigo,n:x.falla,s:s});
+  });
+  opt.sort(function(a,b){return a.c<b.c?-1:1;}); fal.sort(function(a,b){return a.c<b.c?-1:1;});
+  var to=opt.reduce(function(s,i){return s+i.n;},0), tf=fal.reduce(function(s,i){return s+i.n;},0);
+  function tbl(list,label,cls){
+    var head='<div class="prev-h '+cls+'">'+label+' ('+list.reduce(function(s,i){return s+i.n;},0)+' u.)</div>';
+    var body=list.length? list.map(function(i){return '<div class="prev-row"><span class="pc">'+esc(i.c)+'</span><span class="pq">x'+i.n+'</span><span class="ps">'+esc(i.s||'\u2014')+'</span></div>';}).join('')
+                        : '<div class="empty" style="padding:10px">Sin items</div>';
+    return '<div class="prev-col">'+head+body+'</div>';
+  }
+  $('#prevBody').innerHTML='<div class="prev-grid">'+tbl(opt,'\ud83d\udfe2 Optimo','opt')+tbl(fal,'\ud83d\udd34 Falla','fal')+'</div>'+
+    '<div class="prev-tot">Total: <b>'+(to+tf)+'</b> u. &middot; '+to+' optimo &middot; '+tf+' falla</div>';
+  $('#prevBg').classList.add('show'); $('#prevSheet').classList.add('show');
+}
+function prevClose(){ $('#prevBg').classList.remove('show'); $('#prevSheet').classList.remove('show'); }
+function doUpload(){
+  var items=buildItems(); if(!items.length){prevClose();return;}
+  var now=new Date(),sid='D'+now.getTime();
   var payload={responsable:resp,fecha:now.toISOString(),sesion:sid,items:items};
-  var done=function(up){devol={};saveDevol();renderList();renderResults(false);$('#q').value='';toast(up?'Subido a Drive':'Guardado (falta configurar Apps Script en Ajustes)');};
-  if(gasUrl){var b=$('#btnConfirm');b.disabled=true;b.textContent='Subiendo...';
+  var done=function(up){devol={};saveDevol();renderList();renderResults(false);$('#q').value='';prevClose();toast(up?'Subido a Drive':'Guardado (falta configurar Apps Script en Ajustes)');};
+  if(gasUrl){var b=$('#prevGo');b.disabled=true;b.textContent='Subiendo...';
     fetch(gasUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}).then(function(){b.disabled=false;b.textContent='Confirmar y subir';done(true);}).catch(function(){b.disabled=false;b.textContent='Confirmar y subir';done(false);});
   } else { done(false); }
 }
@@ -178,6 +230,7 @@ $('#q').oninput=function(){renderResults(true);};
 $('#q').onfocus=function(){renderResults(true);};
 document.addEventListener('click',function(e){if(!e.target.closest('.search')&&!e.target.closest('.results'))$('#results').classList.remove('open');});
 $('#btnConfirm').onclick=confirmUp;
+$('#prevBg').onclick=prevClose; $('#prevCancel').onclick=prevClose; $('#prevGo').onclick=doUpload;
 
 var tT;function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tT);tT=setTimeout(function(){t.classList.remove('show');},2400);}
 $('#hdrMeta').textContent=ART.length?(ART.length+' articulos - '+ART.reduce(function(s,a){return s+Object.keys(a.variants).length;},0)+' SKUs'):'No se cargo el catalogo';
