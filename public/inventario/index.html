@@ -173,6 +173,21 @@
   .mtx .cbtns button:active{background:#d7efe5}
   .mtx td.has input{background:#e6f6ee;font-weight:800;color:var(--brand)}
   .mtx td{text-align:center}
+  .cmatrix{display:flex;flex-direction:column;gap:12px}
+  .cblock{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+  .cblock-h{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#f6f9f8;font-weight:800;font-size:15px;color:var(--ink)}
+  .cblock-tot{background:var(--brand);color:#fff;border-radius:20px;padding:3px 11px;font-size:13px;min-width:26px;text-align:center}
+  .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px;padding:12px}
+  .tchip{border:1px solid var(--line);border-radius:12px;padding:8px 8px 9px;text-align:center}
+  .tchip.has{border-color:var(--brand);background:#e6f6ee}
+  .tchip .tlbl{font-weight:700;font-size:13px;margin-bottom:7px;color:var(--ink)}
+  .tchip .cell{display:flex;align-items:center;gap:6px;justify-content:center}
+  .tchip .cell input{width:40px;box-sizing:border-box;text-align:center;font-size:18px;font-weight:700;border:1px solid var(--line);border-radius:8px;padding:8px 2px;outline:none;color:var(--ink);background:#fff}
+  .tchip.has .cell input{color:var(--brand)}
+  .tchip .cell button{width:36px;height:42px;border:none;border-radius:9px;font-size:22px;font-weight:800;cursor:pointer;line-height:1;flex:0 0 auto}
+  .tchip .cell .cplus{background:#eef7f2;color:var(--brand)}
+  .tchip .cell .cminus{background:#fdeaea;color:#c0392b}
+  .tchip .cell button:active{filter:brightness(.94)}
   .single-list .row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)}
   .single-list .row:last-child{border:none}
   .single-list .row .lbl{flex:1;font-weight:600}
@@ -523,14 +538,17 @@ function gridHTML(a,vals){
   var hasColor=a.colors.length>0, onlyUnico=a.sizes.length===1&&a.sizes[0]==='ÚNICO';
   if(hasColor && !(onlyUnico && a.colors.length<=1)){
     var sizes=a.sizes.filter(function(s){return s!=='MADRE';});if(!sizes.length)sizes=a.sizes.slice();
-    var h='<div class="mtx"><table><thead><tr><th class="corner">Color \\ Talle</th>';
-    sizes.forEach(function(s){h+='<th>'+esc(sl(s))+'</th>';});h+='<th class="toth">Total</th></tr></thead><tbody>';
-    a.colors.forEach(function(col){h+='<tr data-color="'+esc(col.c)+'"><th>'+esc(col.l)+'</th>';
-      sizes.forEach(function(s){var key=col.c+'|'+s,v=a.variants[key];if(!v){h+='<td class="muted">—</td>';return;}
+    var h='<div class="cmatrix">';
+    a.colors.forEach(function(col){
+      var cells='';
+      sizes.forEach(function(s){var key=col.c+'|'+s,v=a.variants[key];if(!v)return;
         var q=vals[v.c]?vals[v.c].cantidad:'';
-        h+='<td class="'+(q?'has':'')+'"><div class="cell"><input inputmode="numeric" pattern="[0-9]*" data-code="'+esc(v.c)+'" data-color="'+esc(col.l)+'" data-size="'+esc(s)+'" value="'+(q||'')+'"><div class="cbtns"><button class="cminus" type="button" tabindex="-1">–</button><button class="cplus" type="button" tabindex="-1">+</button></div></div></td>';});
-      h+='<td class="rowtot">0</td></tr>';});
-    return h+'</tbody></table></div>';
+        cells+='<div class="tchip'+(q?' has':'')+'"><div class="tlbl">'+esc(sl(s))+'</div><div class="cell"><button class="cminus" type="button" tabindex="-1">\u2013</button><input inputmode="numeric" pattern="[0-9]*" data-code="'+esc(v.c)+'" data-color="'+esc(col.l)+'" data-size="'+esc(s)+'" value="'+(q||'')+'"><button class="cplus" type="button" tabindex="-1">+</button></div></div>';
+      });
+      if(!cells)return;
+      h+='<div class="cblock" data-color="'+esc(col.c)+'"><div class="cblock-h"><span class="cblock-name">'+esc(col.l)+'</span><span class="cblock-tot">0</span></div><div class="cgrid">'+cells+'</div></div>';
+    });
+    return h+'</div>';
   }
   var list='<div class="single-list">';
   Object.keys(a.variants).filter(function(k){return k.split('|')[1]!=='MADRE';}).forEach(function(k){
@@ -542,19 +560,19 @@ function gridHTML(a,vals){
   return list+'</div>';
 }
 function updGridTot(scope,totEl){
-  var t=0,rows=scope.querySelectorAll('tr[data-color]');
-  if(rows.length){Array.prototype.forEach.call(rows,function(tr){var rt=0;Array.prototype.forEach.call(tr.querySelectorAll('input'),function(i){rt+=parseInt(i.value||'0',10)||0;});var tc=tr.querySelector('.rowtot');if(tc)tc.textContent=rt;t+=rt;});}
+  var t=0,rows=scope.querySelectorAll('tr[data-color], .cblock');
+  if(rows.length){Array.prototype.forEach.call(rows,function(tr){var rt=0;Array.prototype.forEach.call(tr.querySelectorAll('input'),function(i){rt+=parseInt(i.value||'0',10)||0;});var tc=tr.querySelector('.rowtot')||tr.querySelector('.cblock-tot');if(tc)tc.textContent=rt;t+=rt;});}
   else{Array.prototype.forEach.call(scope.querySelectorAll('input'),function(i){t+=parseInt(i.value||'0',10)||0;});}
   if(totEl)totEl.textContent=t;return t;
 }
 function bindGrid(scope,totEl){
   Array.prototype.forEach.call(scope.querySelectorAll('input'),function(inp){
     inp.onfocus=function(){try{inp.select();}catch(e){}};
-    inp.oninput=function(){var td=inp.closest('td');if(td)td.classList.toggle('has',!!inp.value&&inp.value!=='0');updGridTot(scope,totEl);};
+    inp.oninput=function(){var cell=inp.closest('td')||inp.closest('.tchip');if(cell)cell.classList.toggle('has',!!inp.value&&inp.value!=='0');updGridTot(scope,totEl);};
   });
   Array.prototype.forEach.call(scope.querySelectorAll('[data-step]'),function(b){b.onclick=function(){var inp=b.parentNode.querySelector('input');var n=parseInt(inp.value||'0',10)+parseInt(b.dataset.step,10);if(n<0)n=0;inp.value=n?n:'';var td=inp.closest('td');if(td)td.classList.toggle('has',n>0);updGridTot(scope,totEl);};});
-  Array.prototype.forEach.call(scope.querySelectorAll('.cplus'),function(b){b.onclick=function(){var inp=b.closest('.cell').querySelector('input');var n=(parseInt(inp.value||'0',10)||0)+1;inp.value=n;var td=inp.closest('td');if(td)td.classList.add('has');updGridTot(scope,totEl);};});
-  Array.prototype.forEach.call(scope.querySelectorAll('.cminus'),function(b){b.onclick=function(){var inp=b.closest('.cell').querySelector('input');var n=(parseInt(inp.value||'0',10)||0)-1;if(n<0)n=0;inp.value=n?n:'';var td=inp.closest('td');if(td)td.classList.toggle('has',n>0);updGridTot(scope,totEl);};});
+  Array.prototype.forEach.call(scope.querySelectorAll('.cplus'),function(b){b.onclick=function(){var inp=b.closest('.cell').querySelector('input');var n=(parseInt(inp.value||'0',10)||0)+1;inp.value=n;var cell=inp.closest('td')||inp.closest('.tchip');if(cell)cell.classList.add('has');updGridTot(scope,totEl);};});
+  Array.prototype.forEach.call(scope.querySelectorAll('.cminus'),function(b){b.onclick=function(){var inp=b.closest('.cell').querySelector('input');var n=(parseInt(inp.value||'0',10)||0)-1;if(n<0)n=0;inp.value=n?n:'';var cell=inp.closest('td')||inp.closest('.tchip');if(cell)cell.classList.toggle('has',n>0);updGridTot(scope,totEl);};});
 }
 function readGrid(scope,art){
   var items={},total=0;
